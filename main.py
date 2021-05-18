@@ -337,6 +337,21 @@ def create_alert(title="Hey, there", message="I have something"):
     """
     os.system(command)
 
+def print_red(message):
+    # print to console with color red
+    print(f"\033[91m{message}\033[0m")
+
+
+def print_green(message):
+    # print to console with color red
+    print(f"\033[92m{message}\033[0m")
+
+
+def print_yellow(message):
+    # print to console with color red
+    print(f"\033[93m{message}\033[0m")
+
+
 
 def executeJob(
     sc,
@@ -371,9 +386,12 @@ def executeJob(
         if state.action == "BUY":
             state.last_buy_price = price
             state.last_buy_high = state.last_buy_price
-            create_alert(state.action, f"Coba cekidot gan di harga {price}")
+            print_green(f"=>   {state.action} @{price}")
+            create_alert(state.action, f"I think the {market} is intresting at {price}!")
+        elif state.action == "SELL":
+            print_red(f"=>   {state.action} @{price}")
         else:
-            print(state.action, price)
+            print_yellow(f"=>   {state.action} @{price}")
             
         # poll every x second
         # 900 = 15 minutes
@@ -385,12 +403,26 @@ if __name__ == "__main__":
     print("Bot lagi gelar lapak")
     # executeJob('asal')
     state = AppState()
+    state2 = AppState()
+    state3 = AppState()
+    state4 = AppState()
+    state5 = AppState()
+    state6 = AppState()
+    state7 = AppState()
+    state8 = AppState()
     app = PublicAPI()
     s = sched.scheduler(time.time, time.sleep)
 
     def runApp():
         # run the first job immediately after starting
         executeJob(s, app, state, market="MATIC-USD", pool_time=900)
+        executeJob(s, app, state2, market="1INCH-USD", pool_time=901)
+        executeJob(s, app, state3, market="BCH-USD", pool_time=902)
+        executeJob(s, app, state4, market="DASH-USD", pool_time=903)
+        executeJob(s, app, state5, market="LTC-USD", pool_time=904)
+        executeJob(s, app, state6, market="ETH-USDT", pool_time=905)
+        executeJob(s, app, state7, market="BTC-USDT", pool_time=906)
+        executeJob(s, app, state8, market="ETC-USD", pool_time=907)
 
         s.run()
 
