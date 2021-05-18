@@ -61,7 +61,8 @@ class PublicAPI:
             )
 
         # resp = self.authAPI('GET', f"products/{market}/candles?granularity={granularity}&start={iso8601start}&end={iso8601end}")
-        print(f"Checking Coin Candles at {iso8601start}")
+        now = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"Checking Coin {market} Candles at {now}")
         resp = requests.get(
             f"{self.api_url}/products/{market}/candles?granularity={granularity}&start={iso8601start}&end={iso8601end}"
         ).json()
@@ -370,8 +371,10 @@ def executeJob(
         if state.action == "BUY":
             state.last_buy_price = price
             state.last_buy_high = state.last_buy_price
-
-        create_alert(state.action, f"Coba cekidot gan di harga {price}")
+            create_alert(state.action, f"Coba cekidot gan di harga {price}")
+        else:
+            print(state.action, price)
+            
         # poll every x second
         # 900 = 15 minutes
         list(map(s.cancel, s.queue))
@@ -387,7 +390,7 @@ if __name__ == "__main__":
 
     def runApp():
         # run the first job immediately after starting
-        executeJob(s, app, state, market="BTC-USDT", pool_time=10)
+        executeJob(s, app, state, market="MATIC-USD", pool_time=900)
 
         s.run()
 
