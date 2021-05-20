@@ -102,6 +102,11 @@ if __name__ == "__main__":
         for config in config_data["configs"]:
             if config["market"] not in states.keys():
                 states[config["market"]] = AppState()
+
+            # First execution init
+            # executeJob(app, states[config["market"]], config["market"], config["time_frame"])
+
+            print(f"Membuat job pengecekan {config['market']} setiap {config['pool_time']} detik")
             schedule.every(config["pool_time"]).seconds.do(
                 executeJob, app, states[config["market"]], config["market"], config["time_frame"]
             )
@@ -109,7 +114,6 @@ if __name__ == "__main__":
         while True:
             schedule.run_pending()
             time.sleep(1)
-
 
     try:
         runApp()
