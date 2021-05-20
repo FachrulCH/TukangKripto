@@ -54,6 +54,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
     """Trading bot job which runs at a scheduled interval"""
     # increment state.iterations
     state.iterations = state.iterations + 1
+    # print(state.iterations, state.last_action)
     # supported time:
     # 1m = 60
     # 5m = 300
@@ -76,6 +77,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
         # if a buy signal
         if state.action == "BUY":
+            state.last_action = "BUY"
             state.last_buy_price = price
             state.last_buy_high = state.last_buy_price
             print_green(f"=>   {state.action} @{price}")
@@ -83,11 +85,13 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 state.action, f"I think the {market} is intresting at {price}!"
             )
         elif state.action == "SELL":
+            state.last_action = "SELL"
             print_red(f"=>   {state.action} @{price}")
             create_alert(
                 state.action, f"I think the {market} is NOT intresting at {price}!"
             )
         else:
+            state.last_action = "WAIT"
             print_yellow(f"=>   {state.action} @{price}")
 
 
