@@ -56,7 +56,9 @@ class PublicAPI:
 
         # resp = self.authAPI('GET', f"products/{market}/candles?granularity={granularity}&start={iso8601start}&end={iso8601end}")
         now = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"{now} Checking Coin '{market}' Candles at timeframe {granularity/60} minutes")
+        print(
+            f"{now} Checking Coin '{market}' Candles at timeframe {granularity/60} minutes"
+        )
         resp = requests.get(
             f"{self.api_url}/products/{market}/candles?granularity={granularity}&start={iso8601start}&end={iso8601end}"
         ).json()

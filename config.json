@@ -7,13 +7,28 @@
     },
     {
       "market": "MATIC-USD",
-      "pool_time": 910,
-      "time_frame": 900
+      "pool_time": 306,
+      "time_frame": 300
     },
     {
       "market": "ETH-USDT",
       "pool_time": 304,
       "time_frame": 300
+    },
+    {
+      "market": "1INCH-USD",
+      "pool_time": 901,
+      "time_frame": 900
+    },
+    {
+      "market": "DASH-USD",
+      "pool_time": 903,
+      "time_frame": 900
+    },
+    {
+      "market": "LTC-USD",
+      "pool_time": 905,
+      "time_frame": 900
     }
   ]
 }

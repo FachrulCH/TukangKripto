@@ -26,19 +26,21 @@ def getInterval(df: pd.DataFrame = pd.DataFrame()) -> pd.DataFrame:
 
 
 def getAction(
-        now=datetime.today().strftime("%Y-%m-%d %H:%M:%S"),
-        app: PublicAPI = None,
-        price: float = 0,
-        df: pd.DataFrame = pd.DataFrame(),
-        df_last: pd.DataFrame = pd.DataFrame(),
-        last_action: str = "WAIT",
-        debug: bool = False,
+    now=datetime.today().strftime("%Y-%m-%d %H:%M:%S"),
+    app: PublicAPI = None,
+    price: float = 0,
+    df: pd.DataFrame = pd.DataFrame(),
+    df_last: pd.DataFrame = pd.DataFrame(),
+    last_action: str = "WAIT",
+    debug: bool = False,
 ) -> str:
-    ema12gtema26co = bool(df_last["ema12gtema26co"].values[0])
+    # ema12gtema26co = bool(df_last["ema12gtema26co"].values[0])
     ema12ltema26co = bool(df_last["ema12ltema26co"].values[0])
+    ema12gtema26 = bool(df_last["ema12gtema26"].values[0])
+    goldencross = bool(df_last["goldencross"].values[0])
 
     # criteria for a buy signal
-    if ema12gtema26co is True and last_action != "BUY":
+    if ema12gtema26 is True and goldencross is True and last_action != "BUY":
         return "BUY"
 
     # criteria for a sell signal
@@ -66,6 +68,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
     ta.addAll()
     df = ta.getDataFrame()
     df_last = getInterval(df)
+    # print(df)
     if len(df_last) > 0:
         price = float(df_last["close"].values[0])
         now = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
@@ -97,18 +100,25 @@ if __name__ == "__main__":
     app = PublicAPI()
     states = {}
 
-
     def runApp():
         for config in config_data["configs"]:
             if config["market"] not in states.keys():
                 states[config["market"]] = AppState()
 
             # First execution init
-            # executeJob(app, states[config["market"]], config["market"], config["time_frame"])
+            executeJob(
+                app, states[config["market"]], config["market"], config["time_frame"]
+            )
 
-            print(f"Membuat job pengecekan {config['market']} setiap {config['pool_time']} detik")
+            print(
+                f"Membuat job pengecekan {config['market']} setiap {config['pool_time']} detik"
+            )
             schedule.every(config["pool_time"]).seconds.do(
-                executeJob, app, states[config["market"]], config["market"], config["time_frame"]
+                executeJob,
+                app,
+                states[config["market"]],
+                config["market"],
+                config["time_frame"],
             )
 
         while True:
