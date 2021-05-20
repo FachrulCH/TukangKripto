@@ -8,6 +8,7 @@ SUPPORTED_GRANULARITY = [60, 300, 900, 3600, 21600, 86400]
 FREQUENCY_EQUIVALENTS = ["T", "5T", "15T", "H", "6H", "D"]
 MAX_GRANULARITY = max(SUPPORTED_GRANULARITY)
 
+
 class PublicAPI:
     def __init__(self) -> None:
         # options
@@ -55,7 +56,7 @@ class PublicAPI:
 
         # resp = self.authAPI('GET', f"products/{market}/candles?granularity={granularity}&start={iso8601start}&end={iso8601end}")
         now = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"Checking Coin {market} Candles at {now}")
+        print(f"{now} Checking Coin '{market}' Candles")
         resp = requests.get(
             f"{self.api_url}/products/{market}/candles?granularity={granularity}&start={iso8601start}&end={iso8601end}"
         ).json()
@@ -99,5 +100,3 @@ class PublicAPI:
         ]
 
         return df
-
-

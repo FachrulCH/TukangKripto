@@ -1,0 +1,19 @@
+{
+  "configs": [
+    {
+      "market": "BTC-USDT",
+      "pool_time": 305,
+      "time_frame": 300
+    },
+    {
+      "market": "MATIC-USD",
+      "pool_time": 910,
+      "time_frame": 900
+    },
+    {
+      "market": "ETH-USDT",
+      "pool_time": 304,
+      "time_frame": 300
+    }
+  ]
+}
