@@ -1,5 +1,8 @@
+from tukang_kripto import configs
+
+
 class AppState:
-    def __init__(self):
+    def __init__(self, name="BTC-USDT"):
         self.action = "WAIT"
         self.buy_count = 0
         self.buy_state = ""
@@ -18,3 +21,5 @@ class AppState:
         self.last_df_index = ""
         self.sell_count = 0
         self.sell_sum = 0
+        self.coin_name = name
+        self.configs = configs.coin(name)

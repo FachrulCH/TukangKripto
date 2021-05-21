@@ -6,11 +6,18 @@ def read_config():
     return json.load(f)
 
 
+config = read_config()
+
+
 def enable_desktop_alert():
-    config = read_config()
     return config['notification'] == 'desktop_alert'
 
 
 def all_coins():
-    config = read_config()
     return config['coins']
+
+
+def coin(name):
+    for index, coin in enumerate(config['coins']):
+        if coin["market"] == name:
+            return config['coins'][index]

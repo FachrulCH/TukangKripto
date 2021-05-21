@@ -66,7 +66,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
     trading_data = app.getHistoricalData(market, time_frame)
     # analyse the market data
     trading_dataCopy = trading_data.copy()
-    ta = TechnicalAnalysis(trading_dataCopy)
+    ta = TechnicalAnalysis(trading_dataCopy, state)
     ta.addAll()
     df = ta.getDataFrame()
     df_last = getInterval(df)
@@ -84,17 +84,18 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             print_green(f"=>   {state.action} @{price}")
             if configs.enable_desktop_alert():
                 create_alert(
-                    state.action, f"I think the {market} is intresting at {price}!"
+                    f"{state.action} {market}", f"I think the {market} is intresting at {price}!"
                 )
         elif state.action == "SELL":
             state.last_action = "SELL"
             print_red(f"=>   {state.action} @{price}")
-            create_alert(
-                state.action, f"I think the {market} is NOT intresting at {price}!"
-            )
+            if configs.enable_desktop_alert():
+                create_alert(
+                    f"{state.action} {market}", f"I think the {market} is NOT intresting at {price}!"
+                )
         else:
             state.last_action = "WAIT"
-            print_yellow(f"=>   {state.action} @{price}")
+            print_yellow(f"=>   {state.action} {str(df_last['date'].values[0])[:16]} ${price}")
 
 
 if __name__ == "__main__":
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     def runApp():
         for coin in configs.all_coins():
             if coin["market"] not in states.keys():
-                states[coin["market"]] = AppState()
+                states[coin["market"]] = AppState(coin["market"])
 
             # First execution init
             executeJob(

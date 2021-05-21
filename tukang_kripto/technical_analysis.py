@@ -1,8 +1,10 @@
 from pandas import DataFrame
 
+from tukang_kripto.app_state import AppState
+
 
 class TechnicalAnalysis:
-    def __init__(self, data=DataFrame()) -> None:
+    def __init__(self, data=DataFrame(), state=AppState()) -> None:
         """Technical Analysis object model
 
         Parameters
