@@ -35,16 +35,17 @@ def getAction(
     debug: bool = False,
 ) -> str:
     # ema12gtema26co = bool(df_last["ema12gtema26co"].values[0])
-    ema12ltema26co = bool(df_last["ema12ltema26co"].values[0])
+    ema12ltema26 = bool(df_last["ema12ltema26"].values[0])
     ema12gtema26 = bool(df_last["ema12gtema26"].values[0])
     goldencross = bool(df_last["goldencross"].values[0])
+    deathcross = bool(df_last["deathcross"].values[0])
 
     # criteria for a buy signal
-    if ema12gtema26 is True and goldencross is True and last_action != "BUY":
+    if ema12gtema26 and goldencross and last_action != "BUY":
         return "BUY"
 
     # criteria for a sell signal
-    elif ema12ltema26co is True and last_action not in ["", "SELL"]:
+    elif ema12ltema26 and deathcross and last_action not in ["", "SELL"]:
         return "SELL"
 
     return "WAIT"

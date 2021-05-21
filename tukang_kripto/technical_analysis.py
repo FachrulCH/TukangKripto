@@ -104,7 +104,10 @@ class TechnicalAnalysis:
         if "sma20" not in self.df:
             self.addSMA(20)
 
-        self.df["goldencross"] = self.df["sma5"] > self.df["sma20"]
+        # self.df["goldencross"] = self.df["sma5"] > self.df["sma20"]
+        previous_5 = self.df['sma5'].shift(1)
+        previous_20 = self.df['sma20'].shift(1)
+        self.df["goldencross"] = ((self.df['sma5'] > self.df['sma20']) & (previous_5 <= previous_20))
 
     def addDeathCross(self) -> None:
         """Add Death Cross SMA5 over SMA20"""
@@ -115,7 +118,10 @@ class TechnicalAnalysis:
         if "sma20" not in self.df:
             self.addSMA(20)
 
-        self.df["deathcross"] = self.df["sma5"] < self.df["sma20"]
+        # self.df["deathcross"] = self.df["sma5"] < self.df["sma20"]
+        previous_5 = self.df['sma5'].shift(1)
+        previous_20 = self.df['sma20'].shift(1)
+        self.df["deathcross"] = ((self.df['sma5'] < self.df['sma20']) & (previous_5 >= previous_20))
 
     def addEMABuySignals(self) -> None:
         """Adds the EMA12/EMA26 buy and sell signals to the DataFrame"""
@@ -153,6 +159,35 @@ class TechnicalAnalysis:
             self.df.ema12ltema26.shift()
         )
         self.df.loc[self.df["ema12ltema26"] == False, "ema12ltema26co"] = False
+
+    def addSMABuySignals(self) -> None:
+        """Adds the SMA50/SMA200 buy and sell signals to the DataFrame"""
+
+        if not isinstance(self.df, DataFrame):
+            raise TypeError('Pandas DataFrame required.')
+
+        if not 'close' in self.df.columns:
+            raise AttributeError("Pandas DataFrame 'close' column required.")
+
+        if not self.df['close'].dtype == 'float64' and not self.df['close'].dtype == 'int64':
+            raise AttributeError(
+                "Pandas DataFrame 'close' column not int64 or float64.")
+
+        if not 'sma50' or not 'sma200' in self.df.columns:
+            self.addSMA(50)
+            self.addSMA(200)
+
+        # true if SMA50 is above the SMA200
+        self.df['sma50gtsma200'] = self.df.sma50 > self.df.sma200
+        # true if the current frame is where SMA50 crosses over above
+        self.df['sma50gtsma200co'] = self.df.sma50gtsma200.ne(self.df.sma50gtsma200.shift())
+        self.df.loc[self.df['sma50gtsma200'] == False, 'sma50gtsma200co'] = False
+
+        # true if the SMA50 is below the SMA200
+        self.df['sma50ltsma200'] = self.df.sma50 < self.df.sma200
+        # true if the current frame is where SMA50 crosses over below
+        self.df['sma50ltsma200co'] = self.df.sma50ltsma200.ne(self.df.sma50ltsma200.shift())
+        self.df.loc[self.df['sma50ltsma200'] == False, 'sma50ltsma200co'] = False
 
     def addAll(self) -> None:
         """Adds analysis to the DataFrame"""
