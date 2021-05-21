@@ -1,4 +1,3 @@
-import json
 import os
 import sched
 import sys
@@ -8,6 +7,7 @@ from datetime import datetime
 import pandas as pd
 import schedule
 
+from tukang_kripto import configs
 from tukang_kripto.app_state import AppState
 from tukang_kripto.public_API import PublicAPI
 from tukang_kripto.technical_analysis import TechnicalAnalysis
@@ -82,9 +82,10 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             state.last_buy_price = price
             state.last_buy_high = state.last_buy_price
             print_green(f"=>   {state.action} @{price}")
-            create_alert(
-                state.action, f"I think the {market} is intresting at {price}!"
-            )
+            if configs.enable_desktop_alert():
+                create_alert(
+                    state.action, f"I think the {market} is intresting at {price}!"
+                )
         elif state.action == "SELL":
             state.last_action = "SELL"
             print_red(f"=>   {state.action} @{price}")
@@ -98,32 +99,31 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
 if __name__ == "__main__":
     print("Bot lagi gelar lapak")
-    f = open("config.json")
-    config_data = json.load(f)
+    config_data = configs.read_config()
 
     # executeJob('asal')
     app = PublicAPI()
     states = {}
 
     def runApp():
-        for config in config_data["configs"]:
-            if config["market"] not in states.keys():
-                states[config["market"]] = AppState()
+        for coin in configs.all_coins():
+            if coin["market"] not in states.keys():
+                states[coin["market"]] = AppState()
 
             # First execution init
             executeJob(
-                app, states[config["market"]], config["market"], config["time_frame"]
+                app, states[coin["market"]], coin["market"], coin["time_frame"]
             )
 
             print(
-                f"Membuat job pengecekan {config['market']} setiap {config['pool_time']} detik"
+                f"Membuat job pengecekan {coin['market']} setiap {coin['pool_time']} detik"
             )
-            schedule.every(config["pool_time"]).seconds.do(
+            schedule.every(coin["pool_time"]).seconds.do(
                 executeJob,
                 app,
-                states[config["market"]],
-                config["market"],
-                config["time_frame"],
+                states[coin["market"]],
+                coin["market"],
+                coin["time_frame"],
             )
 
         while True:

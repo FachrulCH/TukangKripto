@@ -1,5 +1,6 @@
 {
-  "configs": [
+  "notification": "desktop_alert",
+  "coins": [
     {
       "market": "BTC-USDT",
       "pool_time": 305,
