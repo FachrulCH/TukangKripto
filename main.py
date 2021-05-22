@@ -67,10 +67,10 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
     # analyse the market data
     trading_dataCopy = trading_data.copy()
     ta = TechnicalAnalysis(trading_dataCopy, state)
-    ta.addAll()
-    df = ta.getDataFrame()
+    ta.add_all()
+    df = ta.get_data_frame()
     df_last = getInterval(df)
-    # print(df)
+    print(df)
     if len(df_last) > 0:
         price = float(df_last["close"].values[0])
         now = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
@@ -84,18 +84,22 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             print_green(f"=>   {state.action} @{price}")
             if configs.enable_desktop_alert():
                 create_alert(
-                    f"{state.action} {market}", f"I think the {market} is intresting at {price}!"
+                    f"{state.action} {market}",
+                    f"I think the {market} is intresting at {price}!",
                 )
         elif state.action == "SELL":
             state.last_action = "SELL"
             print_red(f"=>   {state.action} @{price}")
             if configs.enable_desktop_alert():
                 create_alert(
-                    f"{state.action} {market}", f"I think the {market} is NOT intresting at {price}!"
+                    f"{state.action} {market}",
+                    f"I think the {market} is NOT intresting at {price}!",
                 )
         else:
             state.last_action = "WAIT"
-            print_yellow(f"=>   {state.action} {str(df_last['date'].values[0])[:16]} ${price}")
+            print_yellow(
+                f"=>   {state.action} {str(df_last['date'].values[0])[:16]} ${price}"
+            )
 
 
 if __name__ == "__main__":
@@ -112,24 +116,22 @@ if __name__ == "__main__":
                 states[coin["market"]] = AppState(coin["market"])
 
             # First execution init
-            executeJob(
-                app, states[coin["market"]], coin["market"], coin["time_frame"]
-            )
+            executeJob(app, states[coin["market"]], coin["market"], coin["time_frame"])
 
-            print(
-                f"Membuat job pengecekan {coin['market']} setiap {coin['pool_time']} detik"
-            )
-            schedule.every(coin["pool_time"]).seconds.do(
-                executeJob,
-                app,
-                states[coin["market"]],
-                coin["market"],
-                coin["time_frame"],
-            )
-
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+        #     print(
+        #         f"Membuat job pengecekan {coin['market']} setiap {coin['pool_time']} detik"
+        #     )
+        #     schedule.every(coin["pool_time"]).seconds.do(
+        #         executeJob,
+        #         app,
+        #         states[coin["market"]],
+        #         coin["market"],
+        #         coin["time_frame"],
+        #     )
+        #
+        # while True:
+        #     schedule.run_pending()
+        #     time.sleep(1)
 
     try:
         runApp()

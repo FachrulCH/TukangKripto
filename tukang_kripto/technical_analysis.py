@@ -1,4 +1,5 @@
-from pandas import DataFrame
+from numpy import maximum, minimum, ndarray
+from pandas import DataFrame, Series
 
 from tukang_kripto.app_state import AppState
 
@@ -41,7 +42,7 @@ class TechnicalAnalysis:
         self.df = data
         self.levels = []
 
-    def simpleMovingAverage(self, period: int) -> float:
+    def simple_moving_average(self, period: int) -> float:
         """Calculates the Simple Moving Average (SMA)"""
 
         if not isinstance(period, int):
@@ -55,7 +56,7 @@ class TechnicalAnalysis:
 
         return self.df.close.rolling(period, min_periods=1).mean()
 
-    def exponentialMovingAverage(self, period: int) -> float:
+    def exponential_moving_average(self, period: int) -> float:
         """Calculates the Exponential Moving Average (EMA)"""
 
         if not isinstance(period, int):
@@ -69,7 +70,7 @@ class TechnicalAnalysis:
 
         return self.df.close.ewm(span=period, adjust=False).mean()
 
-    def addSMA(self, period: int) -> None:
+    def add_sma(self, period: int) -> None:
         """Add the Simple Moving Average (SMA) to the DataFrame"""
 
         if not isinstance(period, int):
@@ -81,9 +82,9 @@ class TechnicalAnalysis:
         if len(self.df) < period:
             raise Exception("Data range too small.")
 
-        self.df["sma" + str(period)] = self.simpleMovingAverage(period)
+        self.df["sma" + str(period)] = self.simple_moving_average(period)
 
-    def addEMA(self, period: int) -> None:
+    def add_ema(self, period: int) -> None:
         """Adds the Exponential Moving Average (EMA) the DateFrame"""
 
         if not isinstance(period, int):
@@ -95,37 +96,41 @@ class TechnicalAnalysis:
         if len(self.df) < period:
             raise Exception("Data range too small.")
 
-        self.df["ema" + str(period)] = self.exponentialMovingAverage(period)
+        self.df["ema" + str(period)] = self.exponential_moving_average(period)
 
-    def addGoldenCross(self) -> None:
+    def add_golden_cross(self) -> None:
         """Add Golden Cross SMA5 over SMA20"""
 
         if "sma5" not in self.df:
-            self.addSMA(5)
+            self.add_sma(5)
 
         if "sma20" not in self.df:
-            self.addSMA(20)
+            self.add_sma(20)
 
         # self.df["goldencross"] = self.df["sma5"] > self.df["sma20"]
-        previous_5 = self.df['sma5'].shift(1)
-        previous_20 = self.df['sma20'].shift(1)
-        self.df["goldencross"] = ((self.df['sma5'] > self.df['sma20']) & (previous_5 <= previous_20))
+        previous_5 = self.df["sma5"].shift(1)
+        previous_20 = self.df["sma20"].shift(1)
+        self.df["goldencross"] = (self.df["sma5"] > self.df["sma20"]) & (
+            previous_5 <= previous_20
+        )
 
-    def addDeathCross(self) -> None:
+    def add_death_cross(self) -> None:
         """Add Death Cross SMA5 over SMA20"""
 
         if "sma5" not in self.df:
-            self.addSMA(5)
+            self.add_sma(5)
 
         if "sma20" not in self.df:
-            self.addSMA(20)
+            self.add_sma(20)
 
         # self.df["deathcross"] = self.df["sma5"] < self.df["sma20"]
-        previous_5 = self.df['sma5'].shift(1)
-        previous_20 = self.df['sma20'].shift(1)
-        self.df["deathcross"] = ((self.df['sma5'] < self.df['sma20']) & (previous_5 >= previous_20))
+        previous_5 = self.df["sma5"].shift(1)
+        previous_20 = self.df["sma20"].shift(1)
+        self.df["deathcross"] = (self.df["sma5"] < self.df["sma20"]) & (
+            previous_5 >= previous_20
+        )
 
-    def addEMABuySignals(self) -> None:
+    def add_ema_buy_signals(self) -> None:
         """Adds the EMA12/EMA26 buy and sell signals to the DataFrame"""
 
         if not isinstance(self.df, DataFrame):
@@ -143,8 +148,8 @@ class TechnicalAnalysis:
             )
 
         if not "ema12" or not "ema26" in self.df.columns:
-            self.addEMA(12)
-            self.addEMA(26)
+            self.add_ema(12)
+            self.add_ema(26)
 
         # true if EMA12 is above the EMA26
         self.df["ema12gtema26"] = self.df.ema12 > self.df.ema26
@@ -162,46 +167,445 @@ class TechnicalAnalysis:
         )
         self.df.loc[self.df["ema12ltema26"] == False, "ema12ltema26co"] = False
 
-    def addSMABuySignals(self) -> None:
+    def add_sma_buy_signals(self) -> None:
         """Adds the SMA50/SMA200 buy and sell signals to the DataFrame"""
 
         if not isinstance(self.df, DataFrame):
-            raise TypeError('Pandas DataFrame required.')
+            raise TypeError("Pandas DataFrame required.")
 
-        if not 'close' in self.df.columns:
+        if not "close" in self.df.columns:
             raise AttributeError("Pandas DataFrame 'close' column required.")
 
-        if not self.df['close'].dtype == 'float64' and not self.df['close'].dtype == 'int64':
+        if (
+            not self.df["close"].dtype == "float64"
+            and not self.df["close"].dtype == "int64"
+        ):
             raise AttributeError(
-                "Pandas DataFrame 'close' column not int64 or float64.")
+                "Pandas DataFrame 'close' column not int64 or float64."
+            )
 
-        if not 'sma50' or not 'sma200' in self.df.columns:
-            self.addSMA(50)
-            self.addSMA(200)
+        if not "sma50" or not "sma200" in self.df.columns:
+            self.add_sma(50)
+            self.add_sma(200)
 
         # true if SMA50 is above the SMA200
-        self.df['sma50gtsma200'] = self.df.sma50 > self.df.sma200
+        self.df["sma50gtsma200"] = self.df.sma50 > self.df.sma200
         # true if the current frame is where SMA50 crosses over above
-        self.df['sma50gtsma200co'] = self.df.sma50gtsma200.ne(self.df.sma50gtsma200.shift())
-        self.df.loc[self.df['sma50gtsma200'] == False, 'sma50gtsma200co'] = False
+        self.df["sma50gtsma200co"] = self.df.sma50gtsma200.ne(
+            self.df.sma50gtsma200.shift()
+        )
+        self.df.loc[self.df["sma50gtsma200"] == False, "sma50gtsma200co"] = False
 
         # true if the SMA50 is below the SMA200
-        self.df['sma50ltsma200'] = self.df.sma50 < self.df.sma200
+        self.df["sma50ltsma200"] = self.df.sma50 < self.df.sma200
         # true if the current frame is where SMA50 crosses over below
-        self.df['sma50ltsma200co'] = self.df.sma50ltsma200.ne(self.df.sma50ltsma200.shift())
-        self.df.loc[self.df['sma50ltsma200'] == False, 'sma50ltsma200co'] = False
+        self.df["sma50ltsma200co"] = self.df.sma50ltsma200.ne(
+            self.df.sma50ltsma200.shift()
+        )
+        self.df.loc[self.df["sma50ltsma200"] == False, "sma50ltsma200co"] = False
 
-    def addAll(self) -> None:
+    def add_all(self) -> None:
         """Adds analysis to the DataFrame"""
-        self.addSMA(20)
-        self.addSMA(50)
+        self.add_sma(20)
+        self.add_sma(50)
         # self.addSMA(200)
-        self.addEMA(12)
-        self.addEMA(26)
-        self.addGoldenCross()
-        self.addDeathCross()
-        self.addEMABuySignals()
+        self.add_ema(12)
+        self.add_ema(26)
+        self.add_golden_cross()
+        self.add_death_cross()
+        self.add_ema_buy_signals()
 
-    def getDataFrame(self) -> DataFrame:
+        """
+        Candlestick References
+        https://commodity.com/technical-analysis
+        https://www.investopedia.com
+        https://github.com/SpiralDevelopment/candlestick-patterns
+        https://www.incrediblecharts.com/candlestick_patterns/candlestick-patterns-strongest.php
+        """
+
+        self.df["hammer"] = self.candle_hammer()
+        self.df["shooting_star"] = self.candle_shooting_star()
+        self.df["hanging_man"] = self.candle_hanging_man()
+        self.df["inverted_hammer"] = self.candle_inverted_hammer()
+        self.df["three_white_soldiers"] = self.candle_three_white_soldiers()
+        self.df["three_black_crows"] = self.candle_three_black_crows()
+        self.df["doji"] = self.candle_doji()
+        self.df["three_line_strike"] = self.candle_three_line_strike()
+        self.df["two_black_gapping"] = self.candle_two_black_gapping()
+        self.df["morning_star"] = self.candle_morning_star()
+        self.df["evening_star"] = self.candle_evening_star()
+        self.df["abandoned_baby"] = self.candle_abandoned_baby()
+        self.df["morning_doji_star"] = self.candle_morning_doji_star()
+        self.df["evening_doji_star"] = self.candle_evening_doji_star()
+        self.df["astral_buy"] = self.candle_astral_buy()
+        self.df["astral_sell"] = self.candle_astral_sell()
+
+    def get_data_frame(self) -> DataFrame:
         """Returns the Pandas DataFrame"""
         return self.df
+
+    def candle_hammer(self) -> Series:
+        """* Candlestick Detected: Hammer ("Weak - Reversal - Bullish Signal - Up"""
+        return (
+            (
+                (self.df["high"] - self.df["low"])
+                > 3 * (self.df["open"] - self.df["close"])
+            )
+            & (
+                (
+                    (self.df["close"] - self.df["low"])
+                    / (0.001 + self.df["high"] - self.df["low"])
+                )
+                > 0.6
+            )
+            & (
+                (
+                    (self.df["open"] - self.df["low"])
+                    / (0.001 + self.df["high"] - self.df["low"])
+                )
+                > 0.6
+            )
+        )
+
+    def candle_shooting_star(self) -> Series:
+        """* Candlestick Detected: Shooting Star ("Weak - Reversal - Bearish Pattern - Down")"""
+        return (
+            (
+                (self.df["open"].shift(1) < self.df["close"].shift(1))
+                & (self.df["close"].shift(1) < self.df["open"])
+            )
+            & (
+                self.df["high"] - maximum(self.df["open"], self.df["close"])
+                >= (abs(self.df["open"] - self.df["close"]) * 3)
+            )
+            & (
+                (minimum(self.df["close"], self.df["open"]) - self.df["low"])
+                <= abs(self.df["open"] - self.df["close"])
+            )
+        )
+
+    def candle_hanging_man(self) -> Series:
+        """* Candlestick Detected: Hanging Man ("Weak - Continuation - Bearish Pattern - Down")"""
+        return (
+            (
+                (self.df["high"] - self.df["low"])
+                > (4 * (self.df["open"] - self.df["close"]))
+            )
+            & (
+                (
+                    (self.df["close"] - self.df["low"])
+                    / (0.001 + self.df["high"] - self.df["low"])
+                )
+                >= 0.75
+            )
+            & (
+                (
+                    (self.df["open"] - self.df["low"])
+                    / (0.001 + self.df["high"] - self.df["low"])
+                )
+                >= 0.75
+            )
+            & (self.df["high"].shift(1) < self.df["open"])
+            & (self.df["high"].shift(2) < self.df["open"])
+        )
+
+    def candle_inverted_hammer(self) -> Series:
+        """* Candlestick Detected: Inverted Hammer ("Weak - Continuation - Bullish Pattern - Up")"""
+        return (
+            (
+                (self.df["high"] - self.df["low"])
+                > 3 * (self.df["open"] - self.df["close"])
+            )
+            & (
+                (self.df["high"] - self.df["close"])
+                / (0.001 + self.df["high"] - self.df["low"])
+                > 0.6
+            )
+            & (
+                (self.df["high"] - self.df["open"])
+                / (0.001 + self.df["high"] - self.df["low"])
+                > 0.6
+            )
+        )
+
+    def candle_three_white_soldiers(self):
+        """*** Candlestick Detected: Three White Soldiers ("Strong - Reversal - Bullish Pattern - Up")"""
+
+        return (
+            (
+                (self.df["open"] > self.df["open"].shift(1))
+                & (self.df["open"] < self.df["close"].shift(1))
+            )
+            & (self.df["close"] > self.df["high"].shift(1))
+            & (
+                self.df["high"] - maximum(self.df["open"], self.df["close"])
+                < (abs(self.df["open"] - self.df["close"]))
+            )
+            & (
+                (self.df["open"].shift(1) > self.df["open"].shift(2))
+                & (self.df["open"].shift(1) < self.df["close"].shift(2))
+            )
+            & (self.df["close"].shift(1) > self.df["high"].shift(2))
+            & (
+                self.df["high"].shift(1)
+                - maximum(self.df["open"].shift(1), self.df["close"].shift(1))
+                < (abs(self.df["open"].shift(1) - self.df["close"].shift(1)))
+            )
+        )
+
+    def candle_three_black_crows(self) -> Series:
+        """* Candlestick Detected: Three Black Crows ("Strong - Reversal - Bearish Pattern - Down")"""
+        return (
+            (
+                (self.df["open"] < self.df["open"].shift(1))
+                & (self.df["open"] > self.df["close"].shift(1))
+            )
+            & (self.df["close"] < self.df["low"].shift(1))
+            & (
+                self.df["low"] - maximum(self.df["open"], self.df["close"])
+                < (abs(self.df["open"] - self.df["close"]))
+            )
+            & (
+                (self.df["open"].shift(1) < self.df["open"].shift(2))
+                & (self.df["open"].shift(1) > self.df["close"].shift(2))
+            )
+            & (self.df["close"].shift(1) < self.df["low"].shift(2))
+            & (
+                self.df["low"].shift(1)
+                - maximum(self.df["open"].shift(1), self.df["close"].shift(1))
+                < (abs(self.df["open"].shift(1) - self.df["close"].shift(1)))
+            )
+        )
+
+    def candle_doji(self) -> Series:
+        """! Candlestick Detected: Doji ("Indecision")"""
+
+        return (
+            (
+                (
+                    abs(self.df["close"] - self.df["open"])
+                    / (self.df["high"] - self.df["low"])
+                )
+                < 0.1
+            )
+            & (
+                (self.df["high"] - maximum(self.df["close"], self.df["open"]))
+                > (3 * abs(self.df["close"] - self.df["open"]))
+            )
+            & (
+                (minimum(self.df["close"], self.df["open"]) - self.df["low"])
+                > (3 * abs(self.df["close"] - self.df["open"]))
+            )
+        )
+
+    def candle_three_line_strike(self) -> Series:
+        """** Candlestick Detected: Three Line Strike ("Reliable - Reversal - Bullish Pattern - Up")"""
+
+        return (
+            (
+                (self.df["open"].shift(1) < self.df["open"].shift(2))
+                & (self.df["open"].shift(1) > self.df["close"].shift(2))
+            )
+            & (self.df["close"].shift(1) < self.df["low"].shift(2))
+            & (
+                self.df["low"].shift(1)
+                - maximum(self.df["open"].shift(1), self.df["close"].shift(1))
+                < (abs(self.df["open"].shift(1) - self.df["close"].shift(1)))
+            )
+            & (
+                (self.df["open"].shift(2) < self.df["open"].shift(3))
+                & (self.df["open"].shift(2) > self.df["close"].shift(3))
+            )
+            & (self.df["close"].shift(2) < self.df["low"].shift(3))
+            & (
+                self.df["low"].shift(2)
+                - maximum(self.df["open"].shift(2), self.df["close"].shift(2))
+                < (abs(self.df["open"].shift(2) - self.df["close"].shift(2)))
+            )
+            & (
+                (self.df["open"] < self.df["low"].shift(1))
+                & (self.df["close"] > self.df["high"].shift(3))
+            )
+        )
+
+    def candle_two_black_gapping(self) -> Series:
+        """*** Candlestick Detected: Two Black Gapping ("Reliable - Reversal - Bearish Pattern - Down")"""
+
+        return (
+            (
+                (self.df["open"] < self.df["open"].shift(1))
+                & (self.df["open"] > self.df["close"].shift(1))
+            )
+            & (self.df["close"] < self.df["low"].shift(1))
+            & (
+                self.df["low"] - maximum(self.df["open"], self.df["close"])
+                < (abs(self.df["open"] - self.df["close"]))
+            )
+            & (self.df["high"].shift(1) < self.df["low"].shift(2))
+        )
+
+    def candle_morning_star(self) -> Series:
+        """*** Candlestick Detected: Morning Star ("Strong - Reversal - Bullish Pattern - Up")"""
+
+        return (
+            (
+                maximum(self.df["open"].shift(1), self.df["close"].shift(1))
+                < self.df["close"].shift(2)
+            )
+            & (self.df["close"].shift(2) < self.df["open"].shift(2))
+        ) & (
+            (self.df["close"] > self.df["open"])
+            & (
+                self.df["open"]
+                > maximum(self.df["open"].shift(1), self.df["close"].shift(1))
+            )
+        )
+
+    def candle_evening_star(self) -> ndarray:
+        """*** Candlestick Detected: Evening Star ("Strong - Reversal - Bearish Pattern - Down")"""
+
+        return (
+            (
+                minimum(self.df["open"].shift(1), self.df["close"].shift(1))
+                > self.df["close"].shift(2)
+            )
+            & (self.df["close"].shift(2) > self.df["open"].shift(2))
+        ) & (
+            (self.df["close"] < self.df["open"])
+            & (
+                self.df["open"]
+                < minimum(self.df["open"].shift(1), self.df["close"].shift(1))
+            )
+        )
+
+    def candle_abandoned_baby(self):
+        """** Candlestick Detected: Abandoned Baby ("Reliable - Reversal - Bullish Pattern - Up")"""
+
+        return (
+            (self.df["open"] < self.df["close"])
+            & (self.df["high"].shift(1) < self.df["low"])
+            & (self.df["open"].shift(2) > self.df["close"].shift(2))
+            & (self.df["high"].shift(1) < self.df["low"].shift(2))
+        )
+
+    def candle_morning_doji_star(self) -> Series:
+        """** Candlestick Detected: Morning Doji Star ("Reliable - Reversal - Bullish Pattern - Up")"""
+
+        return (self.df["close"].shift(2) < self.df["open"].shift(2)) & (
+            abs(self.df["close"].shift(2) - self.df["open"].shift(2))
+            / (self.df["high"].shift(2) - self.df["low"].shift(2))
+            >= 0.7
+        ) & (
+            abs(self.df["close"].shift(1) - self.df["open"].shift(1))
+            / (self.df["high"].shift(1) - self.df["low"].shift(1))
+            < 0.1
+        ) & (
+            self.df["close"] > self.df["open"]
+        ) & (
+            abs(self.df["close"] - self.df["open"]) / (self.df["high"] - self.df["low"])
+            >= 0.7
+        ) & (
+            self.df["close"].shift(2) > self.df["close"].shift(1)
+        ) & (
+            self.df["close"].shift(2) > self.df["open"].shift(1)
+        ) & (
+            self.df["close"].shift(1) < self.df["open"]
+        ) & (
+            self.df["open"].shift(1) < self.df["open"]
+        ) & (
+            self.df["close"] > self.df["close"].shift(2)
+        ) & (
+            (
+                self.df["high"].shift(1)
+                - maximum(self.df["close"].shift(1), self.df["open"].shift(1))
+            )
+            > (3 * abs(self.df["close"].shift(1) - self.df["open"].shift(1)))
+        ) & (
+            minimum(self.df["close"].shift(1), self.df["open"].shift(1))
+            - self.df["low"].shift(1)
+        ) > (
+            3 * abs(self.df["close"].shift(1) - self.df["open"].shift(1))
+        )
+
+    def candle_evening_doji_star(self) -> Series:
+        """** Candlestick Detected: Evening Doji Star ("Reliable - Reversal - Bearish Pattern - Down")"""
+
+        return (self.df["close"].shift(2) > self.df["open"].shift(2)) & (
+            abs(self.df["close"].shift(2) - self.df["open"].shift(2))
+            / (self.df["high"].shift(2) - self.df["low"].shift(2))
+            >= 0.7
+        ) & (
+            abs(self.df["close"].shift(1) - self.df["open"].shift(1))
+            / (self.df["high"].shift(1) - self.df["low"].shift(1))
+            < 0.1
+        ) & (
+            self.df["close"] < self.df["open"]
+        ) & (
+            abs(self.df["close"] - self.df["open"]) / (self.df["high"] - self.df["low"])
+            >= 0.7
+        ) & (
+            self.df["close"].shift(2) < self.df["close"].shift(1)
+        ) & (
+            self.df["close"].shift(2) < self.df["open"].shift(1)
+        ) & (
+            self.df["close"].shift(1) > self.df["open"]
+        ) & (
+            self.df["open"].shift(1) > self.df["open"]
+        ) & (
+            self.df["close"] < self.df["close"].shift(2)
+        ) & (
+            (
+                self.df["high"].shift(1)
+                - maximum(self.df["close"].shift(1), self.df["open"].shift(1))
+            )
+            > (3 * abs(self.df["close"].shift(1) - self.df["open"].shift(1)))
+        ) & (
+            minimum(self.df["close"].shift(1), self.df["open"].shift(1))
+            - self.df["low"].shift(1)
+        ) > (
+            3 * abs(self.df["close"].shift(1) - self.df["open"].shift(1))
+        )
+
+    def candle_astral_buy(self) -> Series:
+        """*** Candlestick Detected: Astral Buy (Fibonacci 3, 5, 8)"""
+
+        return (
+            (self.df["close"] < self.df["close"].shift(3))
+            & (self.df["low"] < self.df["low"].shift(5))
+            & (self.df["close"].shift(1) < self.df["close"].shift(4))
+            & (self.df["low"].shift(1) < self.df["low"].shift(6))
+            & (self.df["close"].shift(2) < self.df["close"].shift(5))
+            & (self.df["low"].shift(2) < self.df["low"].shift(7))
+            & (self.df["close"].shift(3) < self.df["close"].shift(6))
+            & (self.df["low"].shift(3) < self.df["low"].shift(8))
+            & (self.df["close"].shift(4) < self.df["close"].shift(7))
+            & (self.df["low"].shift(4) < self.df["low"].shift(9))
+            & (self.df["close"].shift(5) < self.df["close"].shift(8))
+            & (self.df["low"].shift(5) < self.df["low"].shift(10))
+            & (self.df["close"].shift(6) < self.df["close"].shift(9))
+            & (self.df["low"].shift(6) < self.df["low"].shift(11))
+            & (self.df["close"].shift(7) < self.df["close"].shift(10))
+            & (self.df["low"].shift(7) < self.df["low"].shift(12))
+        )
+
+    def candle_astral_sell(self) -> Series:
+        """*** Candlestick Detected: Astral Sell (Fibonacci 3, 5, 8)"""
+
+        return (
+            (self.df["close"] > self.df["close"].shift(3))
+            & (self.df["high"] > self.df["high"].shift(5))
+            & (self.df["close"].shift(1) > self.df["close"].shift(4))
+            & (self.df["high"].shift(1) > self.df["high"].shift(6))
+            & (self.df["close"].shift(2) > self.df["close"].shift(5))
+            & (self.df["high"].shift(2) > self.df["high"].shift(7))
+            & (self.df["close"].shift(3) > self.df["close"].shift(6))
+            & (self.df["high"].shift(3) > self.df["high"].shift(8))
+            & (self.df["close"].shift(4) > self.df["close"].shift(7))
+            & (self.df["high"].shift(4) > self.df["high"].shift(9))
+            & (self.df["close"].shift(5) > self.df["close"].shift(8))
+            & (self.df["high"].shift(5) > self.df["high"].shift(10))
+            & (self.df["close"].shift(6) > self.df["close"].shift(9))
+            & (self.df["high"].shift(6) > self.df["high"].shift(11))
+            & (self.df["close"].shift(7) > self.df["close"].shift(10))
+            & (self.df["high"].shift(7) > self.df["high"].shift(12))
+        )
