@@ -20,7 +20,10 @@ from tukang_kripto.utils import (
 )
 
 from loguru import logger
-logger.add("running.log", rotation="1 day", format="{time} {level} {message}")    # Once the file is too old, it's rotated
+
+logger.add(
+    "running.log", rotation="1 day", format="{time} {level} {message}"
+)  # Once the file is too old, it's rotated
 
 
 def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=900):
