@@ -44,7 +44,11 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
         trade_conf = configs.coin(market)['indodax']
         indodax = Indodax(trade_conf)
+        price_changes = ""
+        if state.last_close_price > 0:
+            price_changes = int((price - state.last_close_price) / state.last_close_price * 100)
 
+        state.last_close_price = price
         # if a buy signal
         if state.action == "BUY":
             state.last_action = "BUY"
@@ -72,7 +76,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             state.last_action = "WAIT"
             harga = indodax.get_best_bids_price()
             print_yellow(
-                f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)}"
+                f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}"
             )
 
 

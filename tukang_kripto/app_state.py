@@ -19,6 +19,7 @@ class AppState:
         self.last_buy_fee = 0
         self.last_buy_high = 0
         self.last_df_index = ""
+        self.last_close_price = 0
         self.sell_count = 0
         self.sell_sum = 0
         self.coin_name = name

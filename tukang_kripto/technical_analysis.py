@@ -146,6 +146,16 @@ class TechnicalAnalysis:
             previous_5 >= previous_20
         )
 
+        # EMA
+        if not "ema5" or not "ema20" in self.df.columns:
+            self.add_ema(5)
+            self.add_ema(20)
+        previous_5e = self.df["ema5"].shift(1)
+        previous_20e = self.df["ema20"].shift(1)
+        self.df["death_cross_ema"] = (self.df["ema5"] < self.df["ema20"]) & (
+                previous_5e >= previous_20e
+        )
+
     def add_ema_buy_signals(self) -> None:
         """Adds the EMA12/EMA26 buy and sell signals to the DataFrame"""
 
@@ -649,7 +659,7 @@ def getAction(
     ema12gtema26 = bool(df_last["ema12gtema26"].values[0])
     golden_cross = bool(df_last["golden_cross"].values[0])
     golden_cross_ema = bool(df_last["golden_cross_ema"].values[0])
-    deathcross = bool(df_last["deathcross"].values[0])
+    death_cross_ema = bool(df_last["death_cross_ema"].values[0])
 
     # candlestick detection
     # hammer = bool(df_last['hammer'].values[0])
@@ -671,7 +681,7 @@ def getAction(
         return "BUY"
 
     # criteria for a sell signal
-    elif ema12ltema26 and deathcross and last_action not in ["", "SELL"]:
+    elif ema12ltema26 and death_cross_ema and last_action not in ["", "SELL"]:
         return "SELL"
 
     return "WAIT"
