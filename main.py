@@ -3,6 +3,7 @@ import sys
 import time
 from datetime import datetime
 
+import requests
 import schedule
 
 from tukang_kripto import configs
@@ -20,6 +21,7 @@ from tukang_kripto.utils import (
 
 from loguru import logger
 logger.add("running.log", rotation="1 day", format="{time} {level} {message}")    # Once the file is too old, it's rotated
+
 
 def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=900):
     """Trading bot job which runs at a scheduled interval"""
@@ -50,6 +52,14 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
         trade_conf = configs.coin(market)["indodax"]
         indodax = Indodax(trade_conf)
+        harga = indodax.get_best_bids_price()
+        if not harga:
+            # Possibly error from indodax
+            # exit the execution
+            logger.warning("Skip bang, keknya indodax error")
+            return False
+
+        # harga = indodax.get_best_bids_price()
         price_changes = 0
         if state.last_close_price > 0:
             price_changes = round(
@@ -57,14 +67,14 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             )
 
         state.last_close_price = price
+        logger.info(
+            f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}%"
+        )
         # if a buy signal
         if state.action == "BUY":
             state.last_action = "BUY"
             state.last_buy_price = price
             state.last_buy_high = state.last_buy_price
-            harga = indodax.get_best_bids_price()
-
-            logger.info(f"=>   {state.action} {in_rupiah(harga)}")
             if configs.enable_desktop_alert():
                 create_alert(
                     f"{state.action} {market}",
@@ -77,8 +87,6 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
         elif state.action == "SELL":
             state.last_action = "SELL"
-            harga = indodax.get_best_ask_price()
-            logger.info(f"=>   {state.action} {in_rupiah(harga)}")
             if configs.enable_desktop_alert():
                 create_alert(
                     f"{state.action} {market}",
@@ -90,10 +98,6 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
         else:
             state.last_action = "WAIT"
-            harga = indodax.get_best_bids_price()
-            logger.info(
-                f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}%"
-            )
             # print(state.debug)
 
 

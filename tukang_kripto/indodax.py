@@ -25,8 +25,13 @@ class Indodax:
 
     def get_best_bids_price(self):
         # harga beli
-        book = self.api.fetch_order_book(self.config["symbol"])
-        return book["bids"][0][0]
+        try:
+            book = self.api.fetch_order_book(self.config["symbol"])
+            return book["bids"][0][0]
+        except Exception as e:
+            logger.error("Indodax Error euy")
+            logger.error(e)
+            return None
 
     def get_balance_idr(self):
         balances = self.api.fetch_free_balance()

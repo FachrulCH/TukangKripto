@@ -662,19 +662,19 @@ def getAction(
     death_cross_ema = bool(df_last["death_cross_ema"].values[0])
 
     # candlestick detection
-    # hammer = bool(df_last['hammer'].values[0])
-    # inverted_hammer = bool(df_last['inverted_hammer'].values[0])
-    # hanging_man = bool(df_last['hanging_man'].values[0])
-    # shooting_star = bool(df_last['shooting_star'].values[0])
-    # three_white_soldiers = bool(df_last['three_white_soldiers'].values[0])
-    # three_black_crows = bool(df_last['three_black_crows'].values[0])
-    # morning_star = bool(df_last['morning_star'].values[0])
-    # evening_star = bool(df_last['evening_star'].values[0])
-    # three_line_strike = bool(df_last['three_line_strike'].values[0])
-    # abandoned_baby = bool(df_last['abandoned_baby'].values[0])
-    # morning_doji_star = bool(df_last['morning_doji_star'].values[0])
-    # evening_doji_star = bool(df_last['evening_doji_star'].values[0])
-    # two_black_gapping = bool(df_last['two_black_gapping'].values[0])
+    hammer = bool(df_last['hammer'].values[0])
+    inverted_hammer = bool(df_last['inverted_hammer'].values[0])
+    hanging_man = bool(df_last['hanging_man'].values[0])
+    shooting_star = bool(df_last['shooting_star'].values[0])
+    three_white_soldiers = bool(df_last['three_white_soldiers'].values[0])
+    three_black_crows = bool(df_last['three_black_crows'].values[0])
+    morning_star = bool(df_last['morning_star'].values[0])
+    evening_star = bool(df_last['evening_star'].values[0])
+    three_line_strike = bool(df_last['three_line_strike'].values[0])
+    abandoned_baby = bool(df_last['abandoned_baby'].values[0])
+    morning_doji_star = bool(df_last['morning_doji_star'].values[0])
+    evening_doji_star = bool(df_last['evening_doji_star'].values[0])
+    two_black_gapping = bool(df_last['two_black_gapping'].values[0])
 
     # criteria for a buy signal
     to_debug = (
@@ -695,5 +695,24 @@ def getAction(
     elif ema12ltema26 and death_cross_ema and last_action not in ["", "SELL"]:
         return "SELL"
 
-    logger.debug(to_debug)
+    logger.debug("ema12ltema26 {}, ema12gtema26 {}, golden_cross {}, golden_cross_ema {}, death_cross_ema {},",
+                 ema12ltema26,
+                 ema12gtema26,
+                 golden_cross,
+                 golden_cross_ema,
+                 death_cross_ema,)
+    logger.debug("hammer {}, inverted_hammer {}, hanging_man {}, shooting_star {}, three_white_soldiers {}, three_black_crows {}, morning_star {}, evening_star {}, three_line_strike {}, abandoned_baby {}, morning_doji_star {}, evening_doji_star {}, two_black_gapping {}",
+                hammer,
+                inverted_hammer ,
+                hanging_man ,
+                shooting_star ,
+                three_white_soldiers,
+                three_black_crows,
+                morning_star,
+                evening_star,
+                three_line_strike,
+                abandoned_baby,
+                morning_doji_star,
+                evening_doji_star,
+                two_black_gapping,)
     return "WAIT"
