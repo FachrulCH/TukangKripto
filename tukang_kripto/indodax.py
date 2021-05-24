@@ -47,7 +47,7 @@ class Indodax:
         budget = int(percentage / 100 * idr)
         if budget < 10000:
             print_red(f"Aduuh kurang budget euy, sekarang ada {budget}")
-            return False
+            return False, 0
 
         target_price = self.get_best_bids_price()
         coin_buy = round(budget / target_price, 8)
@@ -64,7 +64,7 @@ class Indodax:
 
         if coin < 0:
             print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
-            return False
+            return False, 0
 
         coin_sell = percentage / 100 * coin
         target_price = self.get_best_bids_price()
