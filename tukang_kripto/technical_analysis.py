@@ -1,7 +1,11 @@
+from datetime import datetime
+
+import pandas as pd
 from numpy import maximum, minimum, ndarray
 from pandas import DataFrame, Series
 
 from tukang_kripto.app_state import AppState
+from tukang_kripto.public_API import PublicAPI
 
 
 class TechnicalAnalysis:
@@ -110,9 +114,21 @@ class TechnicalAnalysis:
         # self.df["goldencross"] = self.df["sma5"] > self.df["sma20"]
         previous_5 = self.df["sma5"].shift(1)
         previous_20 = self.df["sma20"].shift(1)
-        self.df["goldencross"] = (self.df["sma5"] > self.df["sma20"]) & (
+        self.df["golden_cross"] = (self.df["sma5"] > self.df["sma20"]) & (
             previous_5 <= previous_20
         )
+
+        #EMA
+        if not "ema12" or not "ema26" in self.df.columns:
+            self.add_ema(12)
+            self.add_ema(26)
+        previous_12 = self.df["ema12"].shift(1)
+        previous_26 = self.df["ema26"].shift(1)
+        self.df["golden_cross_ema"] = (self.df["ema12"] > self.df["ema26"]) & (
+                previous_12 <= previous_26
+        )
+
+
 
     def add_death_cross(self) -> None:
         """Add Death Cross SMA5 over SMA20"""
@@ -609,3 +625,55 @@ class TechnicalAnalysis:
             & (self.df["close"].shift(7) > self.df["close"].shift(10))
             & (self.df["high"].shift(7) > self.df["high"].shift(12))
         )
+
+
+def getInterval(df: pd.DataFrame = pd.DataFrame()) -> pd.DataFrame:
+    if len(df) == 0:
+        return df
+    else:
+        # most recent entry
+        return df.tail(1)
+
+
+def getAction(
+    now=datetime.today().strftime("%Y-%m-%d %H:%M:%S"),
+    app: PublicAPI = None,
+    price: float = 0,
+    df: pd.DataFrame = pd.DataFrame(),
+    df_last: pd.DataFrame = pd.DataFrame(),
+    last_action: str = "WAIT",
+    debug: bool = False,
+) -> str:
+    # ema12gtema26co = bool(df_last["ema12gtema26co"].values[0])
+    ema12ltema26 = bool(df_last["ema12ltema26"].values[0])
+    ema12gtema26 = bool(df_last["ema12gtema26"].values[0])
+    golden_cross = bool(df_last["golden_cross"].values[0])
+    golden_cross_ema = bool(df_last["golden_cross_ema"].values[0])
+    deathcross = bool(df_last["deathcross"].values[0])
+
+    # candlestick detection
+    # hammer = bool(df_last['hammer'].values[0])
+    # inverted_hammer = bool(df_last['inverted_hammer'].values[0])
+    # hanging_man = bool(df_last['hanging_man'].values[0])
+    # shooting_star = bool(df_last['shooting_star'].values[0])
+    # three_white_soldiers = bool(df_last['three_white_soldiers'].values[0])
+    # three_black_crows = bool(df_last['three_black_crows'].values[0])
+    # morning_star = bool(df_last['morning_star'].values[0])
+    # evening_star = bool(df_last['evening_star'].values[0])
+    # three_line_strike = bool(df_last['three_line_strike'].values[0])
+    # abandoned_baby = bool(df_last['abandoned_baby'].values[0])
+    # morning_doji_star = bool(df_last['morning_doji_star'].values[0])
+    # evening_doji_star = bool(df_last['evening_doji_star'].values[0])
+    # two_black_gapping = bool(df_last['two_black_gapping'].values[0])
+
+    # criteria for a buy signal
+    if ema12gtema26 and golden_cross_ema and last_action != "BUY":
+        return "BUY"
+
+    # criteria for a sell signal
+    elif ema12ltema26 and deathcross and last_action not in ["", "SELL"]:
+        return "SELL"
+
+    return "WAIT"
+
+

@@ -4,32 +4,50 @@
     {
       "market": "BTC-USDT",
       "pool_time": 305,
-      "time_frame": 300
+      "time_frame": 300,
+      "indodax": {
+        "symbol": "BTC/IDR"
+      }
     },
     {
       "market": "MATIC-USD",
       "pool_time": 906,
-      "time_frame": 900
+      "time_frame": 900,
+      "indodax": {
+        "symbol": "MATIC/IDR"
+      }
     },
     {
       "market": "ETH-USDT",
       "pool_time": 304,
-      "time_frame": 300
+      "time_frame": 300,
+      "indodax": {
+        "symbol": "ETH/IDR"
+      }
     },
     {
       "market": "1INCH-USD",
       "pool_time": 901,
-      "time_frame": 900
+      "time_frame": 900,
+      "indodax": {
+        "symbol": "1INCH/IDR"
+      }
     },
     {
       "market": "DASH-USD",
       "pool_time": 903,
-      "time_frame": 900
+      "time_frame": 900,
+      "indodax": {
+        "symbol": "DASH/IDR"
+      }
     },
     {
       "market": "LTC-USD",
       "pool_time": 905,
-      "time_frame": 900
+      "time_frame": 900,
+      "indodax": {
+        "symbol": "LTC/IDR"
+      }
     }
   ]
 }

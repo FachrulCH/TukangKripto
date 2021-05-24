@@ -21,3 +21,7 @@ def print_green(message):
 def print_yellow(message):
     # print to console with color red
     print(f"\033[93m{message}\033[0m")
+
+
+def in_rupiah(number):
+    return ("Rp{:,}".format(number))

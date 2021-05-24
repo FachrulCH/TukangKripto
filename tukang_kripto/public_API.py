@@ -16,7 +16,7 @@ class PublicAPI:
         self.die_on_api_error = False
         self.api_url = "https://api.pro.coinbase.com"
 
-    def getHistoricalData(
+    def get_historical_data(
         self,
         market: str = DEFAULT_MARKET,
         granularity: int = MAX_GRANULARITY,
