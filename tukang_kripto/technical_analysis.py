@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pandas as pd
+from loguru import logger
 from numpy import maximum, minimum, ndarray
 from pandas import DataFrame, Series
 
@@ -676,14 +677,16 @@ def getAction(
     # two_black_gapping = bool(df_last['two_black_gapping'].values[0])
 
     # criteria for a buy signal
+    to_debug = (
+        ema12ltema26,
+        ema12gtema26,
+        golden_cross,
+        golden_cross_ema,
+        death_cross_ema,
+    )
+
     if debug:
-        state.debug = (
-            ema12ltema26,
-            ema12gtema26,
-            golden_cross,
-            golden_cross_ema,
-            death_cross_ema,
-        )
+        state.debug = to_debug
 
     if ema12gtema26 and golden_cross_ema and last_action != "BUY":
         return "BUY"
@@ -692,4 +695,5 @@ def getAction(
     elif ema12ltema26 and death_cross_ema and last_action not in ["", "SELL"]:
         return "SELL"
 
+    logger.debug(to_debug)
     return "WAIT"

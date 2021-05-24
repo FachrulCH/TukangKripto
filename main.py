@@ -1,5 +1,4 @@
 import os
-import sched
 import sys
 import time
 from datetime import datetime
@@ -19,8 +18,8 @@ from tukang_kripto.utils import (
     in_rupiah,
 )
 
-s = sched.scheduler(time.time, time.sleep)
-
+from loguru import logger
+logger.add("running.log", rotation="1 day", format="{time} {level} {message}")    # Once the file is too old, it's rotated
 
 def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=900):
     """Trading bot job which runs at a scheduled interval"""
@@ -65,7 +64,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             state.last_buy_high = state.last_buy_price
             harga = indodax.get_best_bids_price()
 
-            print_green(f"=>   {state.action} {in_rupiah(harga)}")
+            logger.info(f"=>   {state.action} {in_rupiah(harga)}")
             if configs.enable_desktop_alert():
                 create_alert(
                     f"{state.action} {market}",
@@ -74,11 +73,12 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             bought, bought_coin = indodax.buy_coin(int(trade_conf["buy_percentage"]))
             state.buy_count += int(bought)
             state.buy_sum += float(bought_coin)
+            logger.info("Buy Count: {} Amount {}", state.buy_count, state.buy_sum)
 
         elif state.action == "SELL":
             state.last_action = "SELL"
             harga = indodax.get_best_ask_price()
-            print_red(f"=>   {state.action} {in_rupiah(harga)}")
+            logger.info(f"=>   {state.action} {in_rupiah(harga)}")
             if configs.enable_desktop_alert():
                 create_alert(
                     f"{state.action} {market}",
@@ -87,17 +87,19 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             sold, sold_coin = indodax.sell_coin(int(trade_conf["sell_percentage"]))
             state.sell_count += int(sold)
             state.sell_sum += float(sold_coin)
+            logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
         else:
             state.last_action = "WAIT"
             harga = indodax.get_best_bids_price()
-            print_yellow(
+            logger.info(
                 f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}%"
             )
-            print(state.debug)
+            # print(state.debug)
 
 
 if __name__ == "__main__":
     print("Bot lagi gelar lapak")
+    logger.info("Siap Memulai!")
     config_data = configs.read_config()
 
     # executeJob('asal')
@@ -111,8 +113,7 @@ if __name__ == "__main__":
 
             # First execution init
             executeJob(app, states[coin["market"]], coin["market"], coin["time_frame"])
-
-            print(
+            logger.info(
                 f"Membuat job pengecekan {coin['market']} setiap {coin['pool_time']} detik"
             )
             schedule.every(coin["pool_time"]).seconds.do(
@@ -135,12 +136,12 @@ if __name__ == "__main__":
         try:
             for coin in configs.all_coins():
                 if coin["market"] in states.keys():
-                    print("coin_name:", states[coin["market"]].coin_name)
-                    print("buy_count:", states[coin["market"]].buy_count)
-                    print("buy_sum:", states[coin["market"]].buy_sum)
+                    print_red(f'coin_name: {states[coin["market"]].coin_name}')
+                    print_green(f'buy_count: {states[coin["market"]].buy_count}')
+                    print_green(f'buy_sum: {states[coin["market"]].buy_sum}')
                     print("sell_count:", states[coin["market"]].sell_count)
                     print("sell_sum:", states[coin["market"]].sell_sum)
-                    print("=========== \n")
+                    print_yellow("=========== \n")
             sys.exit(0)
         except SystemExit:
             os._exit(0)

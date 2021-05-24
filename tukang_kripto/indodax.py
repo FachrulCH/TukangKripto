@@ -1,6 +1,7 @@
 import os
 
 import ccxt
+from loguru import logger
 
 from tukang_kripto.utils import print_red
 
@@ -45,7 +46,7 @@ class Indodax:
 
         target_price = self.get_best_bids_price()
         coin_buy = round(budget / target_price, 8)
-        print("Beli ", self.config["symbol"], "limit", "buy", coin_buy, target_price)
+        logger.info("Beli ", self.config["symbol"], "limit", "buy", coin_buy, target_price)
         response = self.api.create_order(
             self.config["symbol"], "limit", "buy", coin_buy, target_price
         )
@@ -60,7 +61,7 @@ class Indodax:
 
         coin_sell = percentage / 100 * coin
         target_price = self.get_best_bids_price()
-        print("Jual ", self.config["symbol"], "limit", "sell", coin_sell, target_price)
+        logger.info("Jual ", self.config["symbol"], "limit", "sell", coin_sell, target_price)
         response = self.api.create_order(
             self.config["symbol"], "limit", "sell", coin_sell, target_price
         )
