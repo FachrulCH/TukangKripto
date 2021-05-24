@@ -24,3 +24,4 @@ class AppState:
         self.sell_sum = 0
         self.coin_name = name
         self.configs = configs.coin(name)
+        self.debug = ""

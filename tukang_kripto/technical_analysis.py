@@ -118,17 +118,15 @@ class TechnicalAnalysis:
             previous_5 <= previous_20
         )
 
-        #EMA
-        if not "ema12" or not "ema26" in self.df.columns:
-            self.add_ema(12)
-            self.add_ema(26)
-        previous_12 = self.df["ema12"].shift(1)
-        previous_26 = self.df["ema26"].shift(1)
-        self.df["golden_cross_ema"] = (self.df["ema12"] > self.df["ema26"]) & (
-                previous_12 <= previous_26
+        # EMA
+        if not "ema5" or not "ema20" in self.df.columns:
+            self.add_ema(5)
+            self.add_ema(20)
+        previous_5 = self.df["ema5"].shift(1)
+        previous_20 = self.df["ema20"].shift(1)
+        self.df["golden_cross_ema"] = (self.df["ema5"] > self.df["ema20"]) & (
+            previous_5 <= previous_20
         )
-
-
 
     def add_death_cross(self) -> None:
         """Add Death Cross SMA5 over SMA20"""
@@ -153,7 +151,7 @@ class TechnicalAnalysis:
         previous_5e = self.df["ema5"].shift(1)
         previous_20e = self.df["ema20"].shift(1)
         self.df["death_cross_ema"] = (self.df["ema5"] < self.df["ema20"]) & (
-                previous_5e >= previous_20e
+            previous_5e >= previous_20e
         )
 
     def add_ema_buy_signals(self) -> None:
@@ -653,6 +651,7 @@ def getAction(
     df_last: pd.DataFrame = pd.DataFrame(),
     last_action: str = "WAIT",
     debug: bool = False,
+    state=None,
 ) -> str:
     # ema12gtema26co = bool(df_last["ema12gtema26co"].values[0])
     ema12ltema26 = bool(df_last["ema12ltema26"].values[0])
@@ -677,6 +676,15 @@ def getAction(
     # two_black_gapping = bool(df_last['two_black_gapping'].values[0])
 
     # criteria for a buy signal
+    if debug:
+        state.debug = (
+            ema12ltema26,
+            ema12gtema26,
+            golden_cross,
+            golden_cross_ema,
+            death_cross_ema,
+        )
+
     if ema12gtema26 and golden_cross_ema and last_action != "BUY":
         return "BUY"
 
@@ -685,5 +693,3 @@ def getAction(
         return "SELL"
 
     return "WAIT"
-
-

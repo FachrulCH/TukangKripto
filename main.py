@@ -11,8 +11,13 @@ from tukang_kripto.app_state import AppState
 from tukang_kripto.indodax import Indodax
 from tukang_kripto.public_API import PublicAPI
 from tukang_kripto.technical_analysis import TechnicalAnalysis, getAction, getInterval
-from tukang_kripto.utils import (create_alert, print_green, print_red,
-                                 print_yellow, in_rupiah)
+from tukang_kripto.utils import (
+    create_alert,
+    print_green,
+    print_red,
+    print_yellow,
+    in_rupiah,
+)
 
 s = sched.scheduler(time.time, time.sleep)
 
@@ -40,13 +45,17 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
     if len(df_last) > 0:
         price = float(df_last["close"].values[0])
         now = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        state.action = getAction(now, app, price, df, df_last, state.last_action, False)
+        state.action = getAction(
+            now, app, price, df, df_last, state.last_action, False, state
+        )
 
-        trade_conf = configs.coin(market)['indodax']
+        trade_conf = configs.coin(market)["indodax"]
         indodax = Indodax(trade_conf)
-        price_changes = ""
+        price_changes = 0
         if state.last_close_price > 0:
-            price_changes = int((price - state.last_close_price) / state.last_close_price * 100)
+            price_changes = round(
+                ((price - state.last_close_price) / state.last_close_price * 100), 2
+            )
 
         state.last_close_price = price
         # if a buy signal
@@ -62,6 +71,9 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"{state.action} {market}",
                     f"I think the {market} is intresting at {in_rupiah(harga)}!",
                 )
+            bought, bought_coin = indodax.buy_coin(int(trade_conf["buy_percentage"]))
+            state.buy_count += int(bought)
+            state.buy_sum += float(bought_coin)
 
         elif state.action == "SELL":
             state.last_action = "SELL"
@@ -72,12 +84,16 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"{state.action} {market}",
                     f"I think the {market} is NOT intresting at {in_rupiah(harga)}!",
                 )
+            sold, sold_coin = indodax.sell_coin(int(trade_conf["sell_percentage"]))
+            state.sell_count += int(sold)
+            state.sell_sum += float(sold_coin)
         else:
             state.last_action = "WAIT"
             harga = indodax.get_best_bids_price()
             print_yellow(
-                f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}"
+                f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}%"
             )
+            print(state.debug)
 
 
 if __name__ == "__main__":
@@ -117,6 +133,14 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print(datetime.now(), "Tutup lapak")
         try:
+            for coin in configs.all_coins():
+                if coin["market"] in states.keys():
+                    print("coin_name:", states[coin["market"]].coin_name)
+                    print("buy_count:", states[coin["market"]].buy_count)
+                    print("buy_sum:", states[coin["market"]].buy_sum)
+                    print("sell_count:", states[coin["market"]].sell_count)
+                    print("sell_sum:", states[coin["market"]].sell_sum)
+                    print("=========== \n")
             sys.exit(0)
         except SystemExit:
             os._exit(0)
