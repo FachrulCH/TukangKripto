@@ -50,7 +50,7 @@ class Indodax:
             print_red(f"Aduuh kurang budget euy, sekarang ada {idr} maunya {budget}")
             return False, 0
 
-        if limit_budget > 10000:
+        if 10000 < limit_budget < idr:
             print("masuk limit")
             budget = limit_budget
 
@@ -59,10 +59,10 @@ class Indodax:
         logger.info(
             "Beli {}, Budget {}, koin: {}, Dengan harga {}", self.config["symbol"], budget, coin_buy, target_price
         )
-        response = self.api.create_order(
-            self.config["symbol"], "limit", "buy", coin_buy, target_price
-        )
-        return response.get("info").get("success") == "1", coin_buy
+        # response = self.api.create_order(
+        #     self.config["symbol"], "limit", "buy", coin_buy, target_price
+        # )
+        # return response.get("info").get("success") == "1", coin_buy
 
     def sell_coin(self, percentage=100):
         coin = self.get_balance_coin()
