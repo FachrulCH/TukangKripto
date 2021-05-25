@@ -48,7 +48,7 @@ class Indodax:
 
         if budget < 10000:
             print_red(f"Aduuh kurang budget euy, sekarang ada {idr} maunya {budget}")
-            return False, 0
+            return False, 0, 0
 
         if 10000 < limit_budget < idr:
             print("masuk limit")
@@ -79,7 +79,7 @@ class Indodax:
 
         if coin < 0:
             print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
-            return False, 0
+            return False, 0, 0
 
         coin_sell = percentage / 100 * coin
         target_price = self.get_best_bids_price()
@@ -88,8 +88,9 @@ class Indodax:
             logger.success(f"Profit Jual: {est_profit}%")
 
         logger.warning(
-            "Jual {}, koin: {}, Dengan harga {}",
+            "Jual {} (total koin:{}), koin: {}, Dengan harga {}",
             self.config["symbol"],
+            coin,
             coin_sell,
             target_price,
         )

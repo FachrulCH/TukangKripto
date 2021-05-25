@@ -81,7 +81,8 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             bought, bought_coin, price_per_coin = indodax.buy_coin(percentage, limit_budget, state.last_sell_price)
             state.buy_count += int(bought)
             state.buy_sum += float(bought_coin)
-            state.last_buy_price = price_per_coin
+            if price_per_coin > 0:
+                state.last_buy_price = price_per_coin
             logger.info("Buy Count: {} Amount {}", state.buy_count, state.buy_sum)
 
         elif state.action == "SELL":
@@ -94,7 +95,8 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             sold, sold_coin, price_per_coin = indodax.sell_coin(int(trade_conf["sell_percentage"]))
             state.sell_count += int(sold)
             state.sell_sum += float(sold_coin)
-            state.last_sell_price = price_per_coin
+            if price_per_coin > 0:
+                state.last_sell_price = price_per_coin
             logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
         else:
             state.last_action = "WAIT"
