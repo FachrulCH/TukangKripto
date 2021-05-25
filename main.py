@@ -3,26 +3,20 @@ import sys
 import time
 from datetime import datetime
 
-import requests
 import schedule
+from loguru import logger
 
 from tukang_kripto import configs
 from tukang_kripto.app_state import AppState
 from tukang_kripto.indodax import Indodax
 from tukang_kripto.public_API import PublicAPI
-from tukang_kripto.technical_analysis import TechnicalAnalysis, getAction, getInterval
-from tukang_kripto.utils import (
-    create_alert,
-    print_green,
-    print_red,
-    print_yellow,
-    in_rupiah,
-)
-
-from loguru import logger
+from tukang_kripto.technical_analysis import (TechnicalAnalysis, getAction,
+                                              getInterval)
+from tukang_kripto.utils import (create_alert, in_rupiah, print_green,
+                                 print_red, print_yellow)
 
 logger.add(
-    "running.log", rotation="1 day", format="{time} {level} {message}"
+    "running_{time}.log", rotation="1 day", format="{time} {level} {message}"
 )  # Once the file is too old, it's rotated
 
 

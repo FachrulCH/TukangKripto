@@ -56,13 +56,17 @@ class Indodax:
 
         target_price = self.get_best_bids_price()
         coin_buy = round(budget / target_price, 8)
-        logger.info(
-            "Beli {}, Budget {}, koin: {}, Dengan harga {}", self.config["symbol"], budget, coin_buy, target_price
+        logger.warning(
+            "Beli {}, Budget {}, koin: {}, Dengan harga {}",
+            self.config["symbol"],
+            budget,
+            coin_buy,
+            target_price,
         )
-        # response = self.api.create_order(
-        #     self.config["symbol"], "limit", "buy", coin_buy, target_price
-        # )
-        # return response.get("info").get("success") == "1", coin_buy
+        response = self.api.create_order(
+            self.config["symbol"], "limit", "buy", coin_buy, target_price
+        )
+        return response.get("info").get("success") == "1", coin_buy
 
     def sell_coin(self, percentage=100):
         coin = self.get_balance_coin()
@@ -73,8 +77,11 @@ class Indodax:
 
         coin_sell = percentage / 100 * coin
         target_price = self.get_best_bids_price()
-        logger.info(
-            "Jual ", self.config["symbol"], "limit", "sell", coin_sell, target_price
+        logger.warning(
+            "Jual {}, koin: {}, Dengan harga {}",
+            self.config["symbol"],
+            coin_sell,
+            target_price,
         )
         response = self.api.create_order(
             self.config["symbol"], "limit", "sell", coin_sell, target_price
