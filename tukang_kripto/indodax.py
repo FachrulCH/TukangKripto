@@ -1,3 +1,4 @@
+import math
 import os
 
 import ccxt
@@ -76,8 +77,7 @@ class Indodax:
 
     def sell_coin(self, percentage=100, last_buy_price=0):
         coin = self.get_balance_coin()
-
-        if coin < 0:
+        if math.isclose(coin, 0.0):
             print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
             return False, 0, 0
 
