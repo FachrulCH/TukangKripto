@@ -70,7 +70,6 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
         # if a buy signal
         if state.action == "BUY":
             state.last_action = "BUY"
-            state.last_buy_price = price
             state.last_buy_high = state.last_buy_price
             if configs.enable_desktop_alert():
                 create_alert(
@@ -79,9 +78,10 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 )
             percentage = int(trade_conf.get("buy_percentage", 100))
             limit_budget = trade_conf.get("limit_budget", 0)
-            bought, bought_coin = indodax.buy_coin(percentage, limit_budget)
+            bought, bought_coin, price_per_coin = indodax.buy_coin(percentage, limit_budget, state.last_sell_price)
             state.buy_count += int(bought)
             state.buy_sum += float(bought_coin)
+            state.last_buy_price = price_per_coin
             logger.info("Buy Count: {} Amount {}", state.buy_count, state.buy_sum)
 
         elif state.action == "SELL":
@@ -91,9 +91,10 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"{state.action} {market}",
                     f"I think the {market} is NOT intresting at {in_rupiah(harga)}!",
                 )
-            sold, sold_coin = indodax.sell_coin(int(trade_conf["sell_percentage"]))
+            sold, sold_coin, price_per_coin = indodax.sell_coin(int(trade_conf["sell_percentage"]))
             state.sell_count += int(sold)
             state.sell_sum += float(sold_coin)
+            state.last_sell_price = price_per_coin
             logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
         else:
             state.last_action = "WAIT"

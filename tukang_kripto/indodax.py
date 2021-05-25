@@ -27,7 +27,7 @@ class Indodax:
         # harga beli
         try:
             book = self.api.fetch_order_book(self.config["symbol"])
-            return book["bids"][0][0]
+            return book["bids"][1][0]
         except Exception as e:
             logger.error("Indodax Error euy")
             logger.error(e)
@@ -42,7 +42,7 @@ class Indodax:
         balances = self.api.fetch_free_balance()
         return balances[coin]
 
-    def buy_coin(self, percentage=100, limit_budget=0):
+    def buy_coin(self, percentage=100, limit_budget=0, last_sell_price=0):
         idr = self.get_balance_idr()
         budget = int(percentage / 100 * idr)
 
@@ -55,6 +55,10 @@ class Indodax:
             budget = limit_budget
 
         target_price = self.get_best_bids_price()
+        if last_sell_price > 0:
+            est_profit = round((last_sell_price - target_price) / target_price * 100, 2)
+            logger.success(f"Profit beli: {est_profit}%")
+            
         coin_buy = round(budget / target_price, 8)
         logger.warning(
             "Beli {}, Budget {}, koin: {}, Dengan harga {}",
@@ -63,12 +67,14 @@ class Indodax:
             coin_buy,
             target_price,
         )
+        # indodax.create_order('BTC/IDR', 'limit', 'buy', 0.00004784, 540542000)
+
         response = self.api.create_order(
             self.config["symbol"], "limit", "buy", coin_buy, target_price
         )
-        return response.get("info").get("success") == "1", coin_buy
+        return response.get("info").get("success") == "1", coin_buy, target_price
 
-    def sell_coin(self, percentage=100):
+    def sell_coin(self, percentage=100, last_buy_price=0):
         coin = self.get_balance_coin()
 
         if coin < 0:
@@ -77,13 +83,18 @@ class Indodax:
 
         coin_sell = percentage / 100 * coin
         target_price = self.get_best_bids_price()
+        if last_buy_price > 0:
+            est_profit = round((target_price - last_buy_price) / target_price * 100, 2)
+            logger.success(f"Profit Jual: {est_profit}%")
+
         logger.warning(
             "Jual {}, koin: {}, Dengan harga {}",
             self.config["symbol"],
             coin_sell,
             target_price,
         )
+        # indodax.create_order('BTC/IDR', 'limit', 'sell', 0.00004784, 540542000)
         response = self.api.create_order(
             self.config["symbol"], "limit", "sell", coin_sell, target_price
         )
-        return response.get("info").get("success") == "1", coin_sell
+        return response.get("info").get("success") == "1", coin_sell, target_price
