@@ -77,9 +77,9 @@ class Indodax:
 
     def sell_coin(self, percentage=100, last_buy_price=0):
         coin = self.get_balance_coin()
-        # if math.isclose(coin, 0.0):
-        #     print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
-        #     return False, 0, 0
+        if math.isclose(coin, 0.0):
+            print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
+            return False, 0, 0
 
         coin_sell = round(percentage / 100 * coin, 8)
         target_price = self.get_best_bids_price()

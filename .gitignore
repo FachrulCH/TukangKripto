@@ -3,3 +3,4 @@
 dummy.py
 config.json
 *.log
+*.csv

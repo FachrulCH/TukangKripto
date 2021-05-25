@@ -2,7 +2,8 @@ from datetime import datetime
 
 import pandas as pd
 from loguru import logger
-from numpy import maximum, minimum, ndarray
+from numpy import maximum, minimum, ndarray, where, nan, mean, floor
+from numpy import sum as np_sum
 from pandas import DataFrame, Series
 
 from tukang_kripto.app_state import AppState
@@ -236,9 +237,19 @@ class TechnicalAnalysis:
         # self.addSMA(200)
         self.add_ema(12)
         self.add_ema(26)
+        self.add_CMA(),
         self.add_golden_cross()
         self.add_death_cross()
         self.add_ema_buy_signals()
+        self.add_fibonacci_bollinger_bands()
+        self.add_relative_strength_index(14)
+        self.add_MACD()
+        self.add_on_balance_volume()
+        self.add_elder_ray_index()
+        self.add_MACD_buy_signals()
+        self.add_sma_buy_signals()
+        self.add_sma_buy_signals()
+        self.add_MACD_buy_signals()
 
         """
         Candlestick References
@@ -635,6 +646,491 @@ class TechnicalAnalysis:
             & (self.df["high"].shift(7) > self.df["high"].shift(12))
         )
 
+    def change_pct(self) -> DataFrame:
+        """Close change percentage"""
+
+        close_pc = self.df["close"] / self.df["close"].shift(1) - 1
+        close_pc = close_pc.fillna(0)
+        self.df["close_pc"] = close_pc
+        # cumulative returns
+        self.df["close_cpc"] = (1 + self.df["close_pc"]).cumprod()
+
+    def cumulative_moving_average(self) -> float:
+        """Calculates the Cumulative Moving Average (CMA)"""
+        self.df["cma"] = self.df.close.expanding().mean()
+
+    def calculate_relative_strength_index(self, series: int, interval: int = 14):
+        """Calculates the RSI on a Pandas series of closing prices."""
+
+        if not isinstance(series, Series):
+            raise TypeError("Pandas Series required.")
+
+        if not isinstance(interval, int):
+            raise TypeError("Interval integer required.")
+
+        if len(series) < interval:
+            raise IndexError("Pandas Series smaller than interval.")
+
+        diff = series.diff(1).dropna()
+
+        sum_gains = 0 * diff
+        sum_gains[diff > 0] = diff[diff > 0]
+        avg_gains = sum_gains.ewm(com=interval - 1, min_periods=interval).mean()
+
+        sum_losses = 0 * diff
+        sum_losses[diff < 0] = diff[diff < 0]
+        avg_losses = sum_losses.ewm(com=interval - 1, min_periods=interval).mean()
+
+        rs = abs(avg_gains / avg_losses)
+        rsi = 100 - 100 / (1 + rs)
+
+        return rsi
+
+    def add_fibonacci_bollinger_bands(
+        self, interval: int = 20, multiplier: int = 3
+    ) -> None:
+        """Adds Fibonacci Bollinger Bands."""
+
+        if not isinstance(interval, int):
+            raise TypeError("Interval integer required.")
+
+        if not isinstance(multiplier, int):
+            raise TypeError("Multiplier integer required.")
+
+        tp = (self.df["high"] + self.df["low"] + self.df["close"]) / 3
+        sma = tp.rolling(interval).mean()
+        sd = multiplier * tp.rolling(interval).std()
+
+        sma = sma.fillna(0)
+        sd = sd.fillna(0)
+
+        self.df["fbb_mid"] = sma
+        self.df["fbb_upper0_236"] = sma + (0.236 * sd)
+        self.df["fbb_upper0_382"] = sma + (0.382 * sd)
+        self.df["fbb_upper0_5"] = sma + (0.5 * sd)
+        self.df["fbb_upper0_618"] = sma + (0.618 * sd)
+        self.df["fbb_upper0_764"] = sma + (0.764 * sd)
+        self.df["fbb_upper1"] = sma + (1 * sd)
+        self.df["fbb_lower0_236"] = sma - (0.236 * sd)
+        self.df["fbb_lower0_382"] = sma - (0.382 * sd)
+        self.df["fbb_lower0_5"] = sma - (0.5 * sd)
+        self.df["fbb_lower0_618"] = sma - (0.618 * sd)
+        self.df["fbb_lower0_764"] = sma - (0.764 * sd)
+        self.df["fbb_lower1"] = sma - (1 * sd)
+
+    def get_fibonacci_retracement_levels(self, price: float = 0) -> dict:
+        # validates price is numeric
+        if not isinstance(price, int) and not isinstance(price, float):
+            raise TypeError("Optional price is not numeric.")
+
+        price_min = self.df.close.min()
+        price_max = self.df.close.max()
+
+        diff = price_max - price_min
+
+        data = {}
+
+        if price != 0 and (price <= price_min):
+            data["ratio1"] = float(self.__truncate(price_min, 2))
+        elif price == 0:
+            data["ratio1"] = float(self.__truncate(price_min, 2))
+
+        if price != 0 and (price > price_min) and (price <= (price_max - 0.768 * diff)):
+            data["ratio1"] = float(self.__truncate(price_min, 2))
+            data["ratio0_768"] = float(self.__truncate(price_max - 0.768 * diff, 2))
+        elif price == 0:
+            data["ratio0_768"] = float(self.__truncate(price_max - 0.768 * diff, 2))
+
+        if (
+            price != 0
+            and (price > (price_max - 0.768 * diff))
+            and (price <= (price_max - 0.618 * diff))
+        ):
+            data["ratio0_768"] = float(self.__truncate(price_max - 0.768 * diff, 2))
+            data["ratio0_618"] = float(self.__truncate(price_max - 0.618 * diff, 2))
+        elif price == 0:
+            data["ratio0_618"] = float(self.__truncate(price_max - 0.618 * diff, 2))
+
+        if (
+            price != 0
+            and (price > (price_max - 0.618 * diff))
+            and (price <= (price_max - 0.5 * diff))
+        ):
+            data["ratio0_618"] = float(self.__truncate(price_max - 0.618 * diff, 2))
+            data["ratio0_5"] = float(self.__truncate(price_max - 0.5 * diff, 2))
+        elif price == 0:
+            data["ratio0_5"] = float(self.__truncate(price_max - 0.5 * diff, 2))
+
+        if (
+            price != 0
+            and (price > (price_max - 0.5 * diff))
+            and (price <= (price_max - 0.382 * diff))
+        ):
+            data["ratio0_5"] = float(self.__truncate(price_max - 0.5 * diff, 2))
+            data["ratio0_382"] = float(self.__truncate(price_max - 0.382 * diff, 2))
+        elif price == 0:
+            data["ratio0_382"] = float(self.__truncate(price_max - 0.382 * diff, 2))
+
+        if (
+            price != 0
+            and (price > (price_max - 0.382 * diff))
+            and (price <= (price_max - 0.286 * diff))
+        ):
+            data["ratio0_382"] = float(self.__truncate(price_max - 0.382 * diff, 2))
+            data["ratio0_286"] = float(self.__truncate(price_max - 0.286 * diff, 2))
+        elif price == 0:
+            data["ratio0_286"] = float(self.__truncate(price_max - 0.286 * diff, 2))
+
+        if price != 0 and (price > (price_max - 0.286 * diff)) and (price <= price_max):
+            data["ratio0_286"] = float(self.__truncate(price_max - 0.286 * diff, 2))
+            data["ratio0"] = float(self.__truncate(price_max, 2))
+        elif price == 0:
+            data["ratio0"] = float(self.__truncate(price_max, 2))
+
+        if price != 0 and (price < (price_max + 0.272 * diff)) and (price >= price_max):
+            data["ratio0"] = float(self.__truncate(price_max, 2))
+            data["ratio1_272"] = float(self.__truncate(price_max + 0.272 * diff, 2))
+        elif price == 0:
+            data["ratio1_272"] = float(self.__truncate(price_max + 0.272 * diff, 2))
+
+        if (
+            price != 0
+            and (price < (price_max + 0.414 * diff))
+            and (price >= (price_max + 0.272 * diff))
+        ):
+            data["ratio1_272"] = float(self.__truncate(price_max, 2))
+            data["ratio1_414"] = float(self.__truncate(price_max + 0.414 * diff, 2))
+        elif price == 0:
+            data["ratio1_414"] = float(self.__truncate(price_max + 0.414 * diff, 2))
+
+        if (
+            price != 0
+            and (price < (price_max + 0.618 * diff))
+            and (price >= (price_max + 0.414 * diff))
+        ):
+            data["ratio1_618"] = float(self.__truncate(price_max + 0.618 * diff, 2))
+        elif price == 0:
+            data["ratio1_618"] = float(self.__truncate(price_max + 0.618 * diff, 2))
+
+        return data
+
+    def get_fibonacci_upper(self, price: float = 0) -> float:
+        if isinstance(price, int) or isinstance(price, float):
+            if price > 0:
+                fb = self.get_fibonacci_retracement_levels()
+                for f in fb.values():
+                    if f > price:
+                        return f
+        return price
+
+    def get_trade_exit(self, price: float = 0) -> float:
+        if isinstance(price, int) or isinstance(price, float):
+            if price > 0:
+                r = self.get_resistance(price)
+                f = self.get_fibonacci_upper(price)
+                if price < r and price < f:
+                    r_margin = ((r - price) / price) * 100
+                    f_margin = ((f - price) / price) * 100
+
+                    if r_margin > 1 and f_margin > 1 and r <= f:
+                        return r
+                    elif r_margin > 1 and f_margin > 1 and f <= r:
+                        return f
+                    elif r_margin > 1 and f_margin < 1:
+                        return r
+                    elif f_margin > 1 and r_margin < 1:
+                        return f
+
+        return price
+
+    def save_CSV(self, filename: str = "tradingdata.csv") -> None:
+        """Saves the DataFrame to an uncompressed CSV."""
+
+        if not isinstance(self.df, DataFrame):
+            raise TypeError("Pandas DataFrame required.")
+
+        try:
+            self.df.to_csv(filename)
+        except OSError:
+            print("Unable to save: ", filename)
+
+    def moving_average_convergence_divergence(self) -> DataFrame:
+        """Calculates the Moving Average Convergence Divergence (MACD)"""
+
+        if len(self.df) < 26:
+            raise Exception("Data range too small.")
+
+        if (
+            not self.df["ema12"].dtype == "float64"
+            and not self.df["ema12"].dtype == "int64"
+        ):
+            raise AttributeError(
+                "Pandas DataFrame 'ema12' column not int64 or float64."
+            )
+
+        if (
+            not self.df["ema26"].dtype == "float64"
+            and not self.df["ema26"].dtype == "int64"
+        ):
+            raise AttributeError(
+                "Pandas DataFrame 'ema26' column not int64 or float64."
+            )
+
+        df = DataFrame()
+        df["macd"] = self.df["ema12"] - self.df["ema26"]
+        df["signal"] = df["macd"].ewm(span=9, adjust=False).mean()
+        return df
+
+    def add_MACD(self) -> None:
+        """Adds the Moving Average Convergence Divergence (MACD) to the DataFrame"""
+
+        df = self.moving_average_convergence_divergence()
+        self.df["macd"] = df["macd"]
+        self.df["signal"] = df["signal"]
+
+    def add_on_balance_volume(self) -> ndarray:
+        """Calculate On-Balance Volume (OBV)"""
+
+        data = where(
+            self.df["close"] == self.df["close"].shift(1),
+            0,
+            where(
+                self.df["close"] > self.df["close"].shift(1),
+                self.df["volume"],
+                where(
+                    self.df["close"] < self.df["close"].shift(1),
+                    -self.df["volume"],
+                    self.df.iloc[0]["volume"],
+                ),
+            ),
+        ).cumsum()
+
+        self.df["obv"] = data
+        self.df["obv_pc"] = self.df["obv"].pct_change() * 100
+        self.df["obv_pc"] = round(self.df["obv_pc"].fillna(0), 2)
+
+    def add_relative_strength_index(self, period) -> DataFrame:
+        """Calculate the Relative Strength Index (RSI)"""
+
+        if not isinstance(period, int):
+            raise TypeError("Period parameter is not perioderic.")
+
+        if period < 7 or period > 21:
+            raise ValueError("Period is out of range")
+
+        # calculate relative strength index
+        rsi = self.calculate_relative_strength_index(self.df["close"], period)
+        # default to midway-50 for first entries
+        rsi = rsi.fillna(50)
+        self.df["rsi" + str(period)] = rsi
+        self.df["rsi" + str(period)] = self.df["rsi" + str(period)].replace(nan, 50)
+
+    def relative_strength_index(self, period) -> DataFrame:
+        """Calculate the Relative Strength Index (RSI)"""
+
+        if not isinstance(period, int):
+            raise TypeError("Period parameter is not perioderic.")
+
+        if period < 7 or period > 21:
+            raise ValueError("Period is out of range")
+
+        # calculate relative strength index
+        rsi = self.calculate_relative_strength_index(self.df["close"], period)
+        # default to midway-50 for first entries
+        rsi = rsi.fillna(50)
+        return rsi
+
+    def add_elder_ray_index(self) -> None:
+        """Add Elder Ray Index"""
+
+        if "ema13" not in self.df:
+            self.add_ema(13)
+
+        self.df["elder_ray_bull"] = self.df["high"] - self.df["ema13"]
+        self.df["elder_ray_bear"] = self.df["low"] - self.df["ema13"]
+
+        # bear power’s value is negative but increasing (i.e. becoming less bearish)
+        # bull power’s value is increasing (i.e. becoming more bullish)
+        self.df["eri_buy"] = (
+            (self.df["elder_ray_bear"] < 0)
+            & (self.df["elder_ray_bear"] > self.df["elder_ray_bear"].shift(1))
+        ) | ((self.df["elder_ray_bull"] > self.df["elder_ray_bull"].shift(1)))
+
+        # bull power’s value is positive but decreasing (i.e. becoming less bullish)
+        # bear power’s value is decreasing (i.e., becoming more bearish)
+        self.df["eri_sell"] = (
+            (self.df["elder_ray_bull"] > 0)
+            & (self.df["elder_ray_bull"] < self.df["elder_ray_bull"].shift(1))
+        ) | (self.df["elder_ray_bear"] < self.df["elder_ray_bear"].shift(1))
+
+    def get_support_resistance_levels(self) -> Series:
+        """Calculate the Support and Resistance Levels"""
+
+        self.levels = []
+        self.__calculate_support_resistance_levels()
+        levels_ts = {}
+        for level in self.levels:
+            levels_ts[self.df.index[level[0]]] = level[1]
+        # add the support levels to the DataFrame
+        return Series(levels_ts)
+
+    def get_resistance(self, price: float = 0) -> float:
+        if isinstance(price, int) or isinstance(price, float):
+            if price > 0:
+                sr = self.get_support_resistance_levels()
+                for r in sr.sort_values():
+                    if r > price:
+                        return r
+
+        return price
+
+    def print_support_resistance_level(self, price: float = 0) -> None:
+        if isinstance(price, int) or isinstance(price, float):
+            df = self.get_support_resistance_levels()
+
+            if len(df) > 0:
+                df_last = df.tail(1)
+                if float(df_last[0]) < price:
+                    print(
+                        " Support level of "
+                        + str(df_last[0])
+                        + " formed at "
+                        + str(df_last.index[0]),
+                        "\n",
+                    )
+                elif float(df_last[0]) > price:
+                    print(
+                        " Resistance level of "
+                        + str(df_last[0])
+                        + " formed at "
+                        + str(df_last.index[0]),
+                        "\n",
+                    )
+                else:
+                    print(
+                        " Support/Resistance level of "
+                        + str(df_last[0])
+                        + " formed at "
+                        + str(df_last.index[0]),
+                        "\n",
+                    )
+
+    def add_CMA(self) -> None:
+        """Adds the Cumulative Moving Average (CMA) to the DataFrame"""
+        self.df["cma"] = self.cumulative_moving_average()
+
+    def __calculate_support_resistance_levels(self):
+        """Support and Resistance levels. (private function)"""
+
+        for i in range(2, self.df.shape[0] - 2):
+            if self.__is_support(self.df, i):
+                l = self.df["low"][i]
+                if self.__is_far_from_level(l):
+                    self.levels.append((i, l))
+            elif self.__is_resistance(self.df, i):
+                l = self.df["high"][i]
+                if self.__is_far_from_level(l):
+                    self.levels.append((i, l))
+        return self.levels
+
+    def __is_support(self, df, i) -> bool:
+        """Is support level? (private function)"""
+
+        c1 = df["low"][i] < df["low"][i - 1]
+        c2 = df["low"][i] < df["low"][i + 1]
+        c3 = df["low"][i + 1] < df["low"][i + 2]
+        c4 = df["low"][i - 1] < df["low"][i - 2]
+        support = c1 and c2 and c3 and c4
+        return support
+
+    def __is_resistance(self, df, i) -> bool:
+        """Is resistance level? (private function)"""
+
+        c1 = df["high"][i] > df["high"][i - 1]
+        c2 = df["high"][i] > df["high"][i + 1]
+        c3 = df["high"][i + 1] > df["high"][i + 2]
+        c4 = df["high"][i - 1] > df["high"][i - 2]
+        resistance = c1 and c2 and c3 and c4
+        return resistance
+
+    def __is_far_from_level(self, l) -> float:
+        """Is far from support level? (private function)"""
+
+        s = mean(self.df["high"] - self.df["low"])
+        return np_sum([abs(l - x) < s for x in self.levels]) == 0
+
+    def add_MACD_buy_signals(self) -> None:
+        """Adds the MACD/Signal buy and sell signals to the DataFrame"""
+
+        if not isinstance(self.df, DataFrame):
+            raise TypeError("Pandas DataFrame required.")
+
+        if not "close" in self.df.columns:
+            raise AttributeError("Pandas DataFrame 'close' column required.")
+
+        if (
+            not self.df["close"].dtype == "float64"
+            and not self.df["close"].dtype == "int64"
+        ):
+            raise AttributeError(
+                "Pandas DataFrame 'close' column not int64 or float64."
+            )
+
+        if not "macd" or not "signal" in self.df.columns:
+            self.add_MACD()
+            self.add_on_balance_volume()
+
+        # true if MACD is above the Signal
+        self.df["macdgtsignal"] = self.df.macd > self.df.signal
+        # true if the current frame is where MACD crosses over above
+        self.df["macdgtsignalco"] = self.df.macdgtsignal.ne(
+            self.df.macdgtsignal.shift()
+        )
+        self.df.loc[self.df["macdgtsignal"] == False, "macdgtsignalco"] = False
+
+        # true if the MACD is below the Signal
+        self.df["macdltsignal"] = self.df.macd < self.df.signal
+        # true if the current frame is where MACD crosses over below
+        self.df["macdltsignalco"] = self.df.macdltsignal.ne(
+            self.df.macdltsignal.shift()
+        )
+        self.df.loc[self.df["macdltsignal"] == False, "macdltsignalco"] = False
+
+    def __truncate(self, f, n) -> float:
+        return floor(f * 10 ** n) / 10 ** n
+
+    def calculate_relative_strength_index(
+        self, series: int, interval: int = 14
+    ) -> float:
+        """Calculates the RSI on a Pandas series of closing prices."""
+
+        if not isinstance(series, Series):
+            raise TypeError("Pandas Series required.")
+
+        if not isinstance(interval, int):
+            raise TypeError("Interval integer required.")
+
+        if len(series) < interval:
+            raise IndexError("Pandas Series smaller than interval.")
+
+        diff = series.diff(1).dropna()
+
+        sum_gains = 0 * diff
+        sum_gains[diff > 0] = diff[diff > 0]
+        avg_gains = sum_gains.ewm(com=interval - 1, min_periods=interval).mean()
+
+        sum_losses = 0 * diff
+        sum_losses[diff < 0] = diff[diff < 0]
+        avg_losses = sum_losses.ewm(com=interval - 1, min_periods=interval).mean()
+
+        rs = abs(avg_gains / avg_losses)
+        rsi = 100 - 100 / (1 + rs)
+
+        return rsi
+
+
+# ================================
+
 
 def getInterval(df: pd.DataFrame = pd.DataFrame()) -> pd.DataFrame:
     if len(df) == 0:
@@ -710,6 +1206,7 @@ def getAction(
             evening_doji_star,
             two_black_gapping,
         )
+        # logger.debug(df_last)
 
     if golden_cross_ema and last_action != "BUY":
         return "BUY"
