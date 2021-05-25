@@ -9,7 +9,8 @@
       "indodax": {
         "symbol": "BTC/IDR",
         "buy_percentage": 50,
-        "sell_percentage": 100
+        "sell_percentage": 100,
+        "limit_budget": 1500000
       }
     },
     {
@@ -19,7 +20,8 @@
       "indodax": {
         "symbol": "MATIC/IDR",
         "buy_percentage": 50,
-        "sell_percentage": 100
+        "sell_percentage": 100,
+        "limit_budget": 500000
       }
     },
     {

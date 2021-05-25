@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 
+from tukang_kripto.utils import print_red
+
 DEFAULT_MARKET = "BTC-USDT"
 SUPPORTED_GRANULARITY = [60, 300, 900, 3600, 21600, 86400]
 FREQUENCY_EQUIVALENTS = ["T", "5T", "15T", "H", "6H", "D"]
@@ -56,7 +58,7 @@ class PublicAPI:
 
         # resp = self.authAPI('GET', f"products/{market}/candles?granularity={granularity}&start={iso8601start}&end={iso8601end}")
         now = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        print(
+        print_red(
             f"{now} Checking Coin '{market}' Candles at timeframe {granularity/60} minutes"
         )
         resp = requests.get(

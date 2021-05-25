@@ -42,17 +42,22 @@ class Indodax:
         balances = self.api.fetch_free_balance()
         return balances[coin]
 
-    def buy_coin(self, percentage=100):
+    def buy_coin(self, percentage=100, limit_budget=0):
         idr = self.get_balance_idr()
         budget = int(percentage / 100 * idr)
+
         if budget < 10000:
-            print_red(f"Aduuh kurang budget euy, sekarang ada {budget}")
+            print_red(f"Aduuh kurang budget euy, sekarang ada {idr} maunya {budget}")
             return False, 0
+
+        if limit_budget > 10000:
+            print("masuk limit")
+            budget = limit_budget
 
         target_price = self.get_best_bids_price()
         coin_buy = round(budget / target_price, 8)
         logger.info(
-            "Beli ", self.config["symbol"], "limit", "buy", coin_buy, target_price
+            "Beli {}, Budget {}, koin: {}, Dengan harga {}", self.config["symbol"], budget, coin_buy, target_price
         )
         response = self.api.create_order(
             self.config["symbol"], "limit", "buy", coin_buy, target_price

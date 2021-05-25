@@ -83,7 +83,9 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"{state.action} {market}",
                     f"I think the {market} is intresting at {in_rupiah(harga)}!",
                 )
-            bought, bought_coin = indodax.buy_coin(int(trade_conf["buy_percentage"]))
+            percentage = int(trade_conf.get("buy_percentage", 100))
+            limit_budget = trade_conf.get("limit_budget", 0)
+            bought, bought_coin = indodax.buy_coin(percentage, limit_budget)
             state.buy_count += int(bought)
             state.buy_sum += float(bought_coin)
             logger.info("Buy Count: {} Amount {}", state.buy_count, state.buy_sum)
