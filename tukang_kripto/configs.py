@@ -10,7 +10,8 @@ config = read_config()
 
 
 def enable_desktop_alert():
-    return config["notification"] == "desktop_alert"
+    notification = config.get("notification", "off")
+    return notification == "desktop_alert"
 
 
 def all_coins():
@@ -21,3 +22,7 @@ def coin(name):
     for index, coin in enumerate(config["coins"]):
         if coin["market"] == name:
             return config["coins"][index]
+
+
+def run_in_debug():
+    return config.get("debug", False)

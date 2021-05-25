@@ -1,12 +1,15 @@
 {
   "notification": "desktop_alert",
+  "debug": false,
   "coins": [
     {
       "market": "BTC-USDT",
       "pool_time": 305,
       "time_frame": 300,
       "indodax": {
-        "symbol": "BTC/IDR"
+        "symbol": "BTC/IDR",
+        "buy_percentage": 50,
+        "sell_percentage": 100
       }
     },
     {
@@ -14,7 +17,9 @@
       "pool_time": 906,
       "time_frame": 900,
       "indodax": {
-        "symbol": "MATIC/IDR"
+        "symbol": "MATIC/IDR",
+        "buy_percentage": 50,
+        "sell_percentage": 100
       }
     },
     {
@@ -22,7 +27,9 @@
       "pool_time": 304,
       "time_frame": 300,
       "indodax": {
-        "symbol": "ETH/IDR"
+        "symbol": "ETH/IDR",
+        "buy_percentage": 50,
+        "sell_percentage": 100
       }
     },
     {
@@ -30,7 +37,9 @@
       "pool_time": 901,
       "time_frame": 900,
       "indodax": {
-        "symbol": "1INCH/IDR"
+        "symbol": "1INCH/IDR",
+        "buy_percentage": 50,
+        "sell_percentage": 100
       }
     },
     {
@@ -38,7 +47,9 @@
       "pool_time": 903,
       "time_frame": 900,
       "indodax": {
-        "symbol": "DASH/IDR"
+        "symbol": "DASH/IDR",
+        "buy_percentage": 50,
+        "sell_percentage": 100
       }
     },
     {
@@ -46,7 +57,9 @@
       "pool_time": 905,
       "time_frame": 900,
       "indodax": {
-        "symbol": "LTC/IDR"
+        "symbol": "LTC/IDR",
+        "buy_percentage": 50,
+        "sell_percentage": 100
       }
     }
   ]

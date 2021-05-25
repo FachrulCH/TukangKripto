@@ -685,8 +685,31 @@ def getAction(
         death_cross_ema,
     )
 
-    if debug:
-        state.debug = to_debug
+    if state.debug:
+        logger.debug(
+            "ema12ltema26 {}, ema12gtema26 {}, golden_cross {}, golden_cross_ema {}, death_cross_ema {},",
+            ema12ltema26,
+            ema12gtema26,
+            golden_cross,
+            golden_cross_ema,
+            death_cross_ema,
+        )
+        logger.debug(
+            "hammer {}, inverted_hammer {}, hanging_man {}, shooting_star {}, three_white_soldiers {}, three_black_crows {}, morning_star {}, evening_star {}, three_line_strike {}, abandoned_baby {}, morning_doji_star {}, evening_doji_star {}, two_black_gapping {}",
+            hammer,
+            inverted_hammer,
+            hanging_man,
+            shooting_star,
+            three_white_soldiers,
+            three_black_crows,
+            morning_star,
+            evening_star,
+            three_line_strike,
+            abandoned_baby,
+            morning_doji_star,
+            evening_doji_star,
+            two_black_gapping,
+        )
 
     if golden_cross_ema and last_action != "BUY":
         return "BUY"
@@ -695,28 +718,4 @@ def getAction(
     elif death_cross_ema and last_action not in ["", "SELL"]:
         return "SELL"
 
-    logger.debug(
-        "ema12ltema26 {}, ema12gtema26 {}, golden_cross {}, golden_cross_ema {}, death_cross_ema {},",
-        ema12ltema26,
-        ema12gtema26,
-        golden_cross,
-        golden_cross_ema,
-        death_cross_ema,
-    )
-    logger.debug(
-        "hammer {}, inverted_hammer {}, hanging_man {}, shooting_star {}, three_white_soldiers {}, three_black_crows {}, morning_star {}, evening_star {}, three_line_strike {}, abandoned_baby {}, morning_doji_star {}, evening_doji_star {}, two_black_gapping {}",
-        hammer,
-        inverted_hammer,
-        hanging_man,
-        shooting_star,
-        three_white_soldiers,
-        three_black_crows,
-        morning_star,
-        evening_star,
-        three_line_strike,
-        abandoned_baby,
-        morning_doji_star,
-        evening_doji_star,
-        two_black_gapping,
-    )
     return "WAIT"
