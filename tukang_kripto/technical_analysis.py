@@ -1206,6 +1206,22 @@ def getAction(
             evening_doji_star,
             two_black_gapping,
         )
+        logger.debug(
+            "{} {} low {}, hi {}, op {}, cl {}, vol {}, eri_buy {}, eri_sell {}, macd>signal {} {} macd<signal {} {}",
+            df_last["date"].values[0],
+            df_last["market"].values[0],
+            df_last["low"].values[0],
+            df_last["high"].values[0],
+            df_last["open"].values[0],
+            df_last["close"].values[0],
+            df_last["volume"].values[0],
+            df_last["eri_buy"].values[0],
+            df_last["eri_sell"].values[0],
+            df_last["macdgtsignal"].values[0],
+            df_last["macdgtsignalco"].values[0],
+            df_last["macdltsignal"].values[0],
+            df_last["macdltsignalco"].values[0],
+        )
         # logger.debug(df_last)
 
     if golden_cross_ema and last_action != "BUY":
