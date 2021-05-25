@@ -59,7 +59,7 @@ class Indodax:
         if last_sell_price > 0:
             est_profit = round((last_sell_price - target_price) / target_price * 100, 2)
             logger.success(f"Profit beli: {est_profit}%")
-            
+
         coin_buy = round(budget / target_price, 8)
         logger.warning(
             "Beli {}, Budget {}, koin: {}, Dengan harga {}",
@@ -77,15 +77,28 @@ class Indodax:
 
     def sell_coin(self, percentage=100, last_buy_price=0):
         coin = self.get_balance_coin()
-        if math.isclose(coin, 0.0):
-            print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
-            return False, 0, 0
+        # if math.isclose(coin, 0.0):
+        #     print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
+        #     return False, 0, 0
 
-        coin_sell = percentage / 100 * coin
+        coin_sell = round(percentage / 100 * coin, 8)
         target_price = self.get_best_bids_price()
         if last_buy_price > 0:
             est_profit = round((target_price - last_buy_price) / target_price * 100, 2)
             logger.success(f"Profit Jual: {est_profit}%")
+            minimum_profit = self.config.get("minimum_profit_percentage", 1)
+            if int(est_profit) < int(minimum_profit):
+                new_price = int(
+                    last_buy_price + (last_buy_price * minimum_profit / 100)
+                )
+                logger.warning(
+                    "Karena ga cuan, beli {}, masa di jual {}, kita tambahin {}% jadi {}",
+                    last_buy_price,
+                    target_price,
+                    minimum_profit,
+                    new_price,
+                )
+                target_price = new_price
 
         logger.warning(
             "Jual {} (total koin:{}), koin: {}, Dengan harga {}",

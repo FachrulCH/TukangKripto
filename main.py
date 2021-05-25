@@ -10,10 +10,14 @@ from tukang_kripto import configs
 from tukang_kripto.app_state import AppState
 from tukang_kripto.indodax import Indodax
 from tukang_kripto.public_API import PublicAPI
-from tukang_kripto.technical_analysis import (TechnicalAnalysis, getAction,
-                                              getInterval)
-from tukang_kripto.utils import (create_alert, in_rupiah, print_green,
-                                 print_red, print_yellow)
+from tukang_kripto.technical_analysis import TechnicalAnalysis, getAction, getInterval
+from tukang_kripto.utils import (
+    create_alert,
+    in_rupiah,
+    print_green,
+    print_red,
+    print_yellow,
+)
 
 logger.add(
     "running_{time}.log", rotation="1 day", format="{time} {level} {message}"
@@ -78,9 +82,21 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 )
             percentage = int(trade_conf.get("buy_percentage", 100))
             limit_budget = trade_conf.get("limit_budget", 0)
-            bought, bought_coin, price_per_coin = indodax.buy_coin(percentage, limit_budget, state.last_sell_price)
+
+            # prevent overbought (2 times without selling, it will cost budget for other)
+            if state.buy_count >= state.sell_count:
+                logger.warning(
+                    "Kebanyakan beli, yang tadi {} koin aja belum di jual :P",
+                    state.last_buy_size,
+                )
+                return None
+
+            bought, bought_coin, price_per_coin = indodax.buy_coin(
+                percentage, limit_budget, state.last_sell_price
+            )
             state.buy_count += int(bought)
             state.buy_sum += float(bought_coin)
+            state.last_buy_size = float(bought_coin)
             if price_per_coin > 0:
                 state.last_buy_price = price_per_coin
             logger.info("Buy Count: {} Amount {}", state.buy_count, state.buy_sum)
@@ -92,7 +108,9 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"{state.action} {market}",
                     f"I think the {market} is NOT intresting at {in_rupiah(harga)}!",
                 )
-            sold, sold_coin, price_per_coin = indodax.sell_coin(int(trade_conf["sell_percentage"]))
+            sold, sold_coin, price_per_coin = indodax.sell_coin(
+                int(trade_conf["sell_percentage"])
+            )
             state.sell_count += int(sold)
             state.sell_sum += float(sold_coin)
             if price_per_coin > 0:
