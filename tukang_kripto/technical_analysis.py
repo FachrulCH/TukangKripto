@@ -1233,9 +1233,6 @@ def getAction(
 
     # criteria for a sell signal
     if death_cross_ema and last_action not in ["", "SELL"]:
-        logger.error("Harusnya sih dijual, tapi cek stop loss dulu")
-        if not stop_loss(state):
-            return "WAIT"
         return "SELL"
 
     return "WAIT"

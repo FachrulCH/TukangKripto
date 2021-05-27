@@ -10,12 +10,20 @@ from tukang_kripto import configs
 from tukang_kripto.app_state import AppState
 from tukang_kripto.indodax import Indodax
 from tukang_kripto.public_API import PublicAPI
-from tukang_kripto.technical_analysis import (TechnicalAnalysis,
-                                              calculate_profit, getAction,
-                                              getInterval)
-from tukang_kripto.utils import (create_alert, create_csv_transaction,
-                                 in_rupiah, print_green, print_red,
-                                 print_yellow)
+from tukang_kripto.technical_analysis import (
+    TechnicalAnalysis,
+    calculate_profit,
+    getAction,
+    getInterval,
+)
+from tukang_kripto.utils import (
+    create_alert,
+    create_csv_transaction,
+    in_rupiah,
+    print_green,
+    print_red,
+    print_yellow,
+)
 
 logger.add(
     "running_{time}.log", rotation="1 day", format="{time} {level} {message}"
@@ -95,7 +103,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 state.buy_sum += float(bought_coin)
                 state.last_buy_size = float(bought_coin)
                 state.last_buy_price = price_per_coin
-
+                state.trend = "bullish"
                 transaction = {
                     "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "coin_name": trade_conf["symbol"],
@@ -115,6 +123,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
         elif state.action == "SELL":
             state.last_action = "SELL"
+            state.trend = "bearish"
             if configs.enable_desktop_alert():
                 create_alert(
                     f"{state.action} {market}",

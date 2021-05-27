@@ -28,3 +28,4 @@ class AppState:
         self.config_trade = configs.coin(name).get("indodax", {})
         self.debug = configs.run_in_debug()
         self.market_price = 0
+        self.trend = "bullish"

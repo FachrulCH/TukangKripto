@@ -7,9 +7,7 @@ from loguru import logger
 
 from tukang_kripto import utils
 from tukang_kripto.technical_analysis import calculate_profit
-from tukang_kripto.utils import (create_csv_transaction,
-                                 get_latest_csv_transaction, in_rupiah,
-                                 print_red)
+from tukang_kripto.utils import get_latest_csv_transaction, in_rupiah, print_red
 
 
 class Indodax:
@@ -33,7 +31,10 @@ class Indodax:
         # harga beli
         try:
             book = self.api.fetch_order_book(self.config["symbol"])
-            return book["bids"][1][0]
+            order_book_price = book["bids"][1][0]
+            if self.config.get("sell_with_profit_only", False):
+                return self.calculate_sell_price(order_book_price)
+            return order_book_price
         except Exception as e:
             logger.error("Indodax Error euy")
             logger.error(e)
@@ -148,4 +149,4 @@ class Indodax:
             # found data
             return float(last_buy[4])
         print("Last buy price not found")
-        return None
+        return 0
