@@ -1233,6 +1233,8 @@ def getAction(
 
     # criteria for a sell signal
     if death_cross_ema and last_action not in ["", "SELL"]:
+        if not stop_loss(state):
+            return "WAIT"
         return "SELL"
 
     return "WAIT"
