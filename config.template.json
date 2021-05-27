@@ -10,7 +10,9 @@
         "symbol": "BTC/IDR",
         "buy_percentage": 50,
         "sell_percentage": 100,
-        "limit_budget": 1500000
+        "limit_budget": 1500000,
+        "minimum_profit_percentage": 1.5,
+        "maximum_loss_percentage": 5
       }
     },
     {
@@ -21,7 +23,9 @@
         "symbol": "MATIC/IDR",
         "buy_percentage": 50,
         "sell_percentage": 100,
-        "limit_budget": 500000
+        "limit_budget": 500000,
+        "minimum_profit_percentage": 1.5,
+        "maximum_loss_percentage": 5
       }
     },
     {
