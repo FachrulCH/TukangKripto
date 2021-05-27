@@ -54,7 +54,7 @@ class Indodax:
 
         if budget < 10000:
             print_red(f"Aduuh kurang budget euy, sekarang ada {idr} maunya {budget}")
-            return False, 0, 0
+            return False, 0, 0, 0
 
         if 10000 < limit_budget < idr:
             print("Using limited budget")
@@ -85,7 +85,7 @@ class Indodax:
         coin = self.get_balance_coin()
         if math.isclose(coin, 0.0):
             print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
-            return False, 0, 0
+            return False, 0, 0, 0
 
         coin_sell = round(percentage / 100 * coin, 8)
         sell_at = self.get_best_bids_price()
