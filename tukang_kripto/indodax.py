@@ -6,7 +6,10 @@ import ccxt
 from loguru import logger
 
 from tukang_kripto import utils
-from tukang_kripto.utils import print_red
+from tukang_kripto.technical_analysis import calculate_profit
+from tukang_kripto.utils import (create_csv_transaction,
+                                 get_latest_csv_transaction, in_rupiah,
+                                 print_red)
 
 
 class Indodax:
@@ -45,7 +48,7 @@ class Indodax:
         balances = self.api.fetch_free_balance()
         return balances[coin]
 
-    def buy_coin(self, percentage=100, limit_budget=0, last_sell_price=0):
+    def buy_coin(self, percentage=100, limit_budget=0):
         idr = self.get_balance_idr()
         budget = int(percentage / 100 * idr)
 
@@ -54,68 +57,60 @@ class Indodax:
             return False, 0, 0
 
         if 10000 < limit_budget < idr:
-            print("masuk limit")
+            print("Using limited budget")
             budget = limit_budget
 
         target_price = self.get_best_bids_price()
-        if last_sell_price > 0:
-            est_profit = round((last_sell_price - target_price) / target_price * 100, 2)
-            logger.success(f"Profit beli: {est_profit}%")
-
         coin_buy = round(budget / target_price, 8)
         logger.warning(
-            "Beli {}, Budget {}, koin: {}, Dengan harga {}, last_sell_price {}",
+            "BELI {}, Budget {}, koin: {}, Dengan harga {}",
             self.config["symbol"],
             budget,
             coin_buy,
             target_price,
-            last_sell_price,
         )
         # indodax.create_order('BTC/IDR', 'limit', 'buy', 0.00004784, 540542000)
 
         response = self.api.create_order(
             self.config["symbol"], "limit", "buy", coin_buy, target_price
         )
-        return response.get("info").get("success") == "1", coin_buy, target_price
+        return (
+            response.get("info").get("success") == "1",
+            coin_buy,
+            target_price,
+            budget,
+        )
 
-    def sell_coin(self, percentage=100, last_buy_price=0):
+    def sell_coin(self, percentage=100):
         coin = self.get_balance_coin()
         if math.isclose(coin, 0.0):
             print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
             return False, 0, 0
 
         coin_sell = round(percentage / 100 * coin, 8)
-        target_price = self.get_best_bids_price()
-        if last_buy_price > 0:
-            est_profit = round((target_price - last_buy_price) / target_price * 100, 2)
-            logger.success(f"Profit Jual: {est_profit}%")
-            minimum_profit = self.config.get("minimum_profit_percentage", 1)
-            if int(est_profit) < int(minimum_profit):
-                new_price = int(
-                    last_buy_price + (last_buy_price * minimum_profit / 100)
-                )
-                logger.warning(
-                    "Karena ga cuan, beli {}, masa di jual {}, kita tambahin {}% jadi {}",
-                    last_buy_price,
-                    target_price,
-                    minimum_profit,
-                    new_price,
-                )
-                target_price = new_price
-
-        logger.warning(
-            "Jual {} (total koin:{}), koin: {}, Dengan harga {}, last_buy_price {}",
+        sell_at = self.get_best_bids_price()
+        buy_at = self.get_last_buy_price()
+        profit = calculate_profit(buy_at, sell_at)
+        estimate_amount = coin_sell * sell_at
+        logger.success(
+            "JUAL {} Posisi {}%:  Koin {}, beli {}, jual {}",
             self.config["symbol"],
-            coin,
+            profit,
             coin_sell,
-            target_price,
-            last_buy_price,
+            in_rupiah(buy_at),
+            in_rupiah(sell_at),
         )
+
         # indodax.create_order('BTC/IDR', 'limit', 'sell', 0.00004784, 540542000)
         response = self.api.create_order(
-            self.config["symbol"], "limit", "sell", coin_sell, target_price
+            self.config["symbol"], "limit", "sell", coin_sell, sell_at
         )
-        return response.get("info").get("success") == "1", coin_sell, target_price
+        return (
+            response.get("info").get("success") == "1",
+            coin_sell,
+            sell_at,
+            estimate_amount,
+        )
 
     def get_history_trade(self, order=None, since=None, params={}):
         self.api.load_markets()
@@ -137,3 +132,20 @@ class Indodax:
         trade_data = self.get_history_trade(order)
         last_trade = trade_data[0]
         return {"last_buy_price": last_trade["price"]}
+
+    def calculate_sell_price(self, target_sell_price):
+        min_profit = float(self.config.get("minimum_profit_percentage", 0))
+        last_price = self.get_last_buy_price()
+        if last_price:
+            min_sell_profit = round(last_price + (last_price * min_profit / 100))
+            if target_sell_price < min_sell_profit:
+                return min_sell_profit
+        return target_sell_price
+
+    def get_last_buy_price(self):
+        last_buy = get_latest_csv_transaction(self.config["symbol"], "buy")
+        if len(last_buy) > 1:
+            # found data
+            return float(last_buy[4])
+        print("Last buy price not found")
+        return None

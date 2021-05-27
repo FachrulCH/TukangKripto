@@ -2,12 +2,14 @@ from datetime import datetime
 
 import pandas as pd
 from loguru import logger
-from numpy import maximum, minimum, ndarray, where, nan, mean, floor
+from numpy import floor, maximum, mean, minimum, nan, ndarray
 from numpy import sum as np_sum
+from numpy import where
 from pandas import DataFrame, Series
 
 from tukang_kripto.app_state import AppState
 from tukang_kripto.public_API import PublicAPI
+from tukang_kripto.utils import get_latest_csv_transaction, in_rupiah
 
 
 class TechnicalAnalysis:
@@ -1222,13 +1224,51 @@ def getAction(
             df_last["macdltsignal"].values[0],
             df_last["macdltsignalco"].values[0],
         )
-        # logger.debug(df_last)
+
+    if stop_loss(state):
+        return "SELL"
 
     if golden_cross_ema and last_action != "BUY":
         return "BUY"
 
     # criteria for a sell signal
-    elif death_cross_ema and last_action not in ["", "SELL"]:
+    if death_cross_ema and last_action not in ["", "SELL"]:
         return "SELL"
 
     return "WAIT"
+
+
+def get_last_buy_price(coin_symbol):
+    last_buy = get_latest_csv_transaction(coin_symbol, "buy")
+    if len(last_buy) > 1:
+        # found data
+        return float(last_buy[4])
+    print("Last buy price not found")
+    return None
+
+
+def calculate_profit(buy_price, sell_price):
+    if not buy_price or not sell_price:
+        return 0
+    return round((sell_price - buy_price) / buy_price * 100, 2)
+
+
+def stop_loss(state: AppState):
+    loss_rate = state.config_trade.get("maximum_loss_percentage", 0)
+    if loss_rate == 0 or state.market_price == 0:
+        return False
+
+    max_loss_rate = float(loss_rate) / 100
+    last_price = get_last_buy_price(state.config_trade["symbol"])
+    if last_price:
+        max_loss = round(last_price - (last_price * max_loss_rate))
+        print("Market price: ", state.market_price)
+        if state.market_price <= max_loss:
+            logger.warning(
+                f"STOP LOSS max_loss_rate:{max_loss_rate}, last_buy: {in_rupiah(last_price)}, max_lost: {in_rupiah(max_loss)}, market_price {in_rupiah(state.market_price)}"
+            )
+            return True
+    logger.warning(
+        f"MASIH AMAN Terkendali, lanjutkan!  max_loss_rate:{max_loss_rate}, last_buy: {in_rupiah(last_price)}, max_lost: {in_rupiah(max_loss)}, market_price {in_rupiah(state.market_price)}"
+    )
+    return False

@@ -34,8 +34,10 @@ def filter_by(array, key, value=None):
 
 
 def create_csv_transaction(coin_name, dict_data):
+    if "/" in coin_name:
+        coin_name = coin_name.split("/")[0]
     file = f"transaction_{coin_name.lower()}.csv"
-    csv_columns = ["date", "coin_name", "type", "coin_amount", "price"]
+    csv_columns = ["date", "coin_name", "type", "coin_amount", "price", "amount"]
     exist = os.path.exists(file)
     if not exist:
         print(f"Creating {file}")
@@ -50,12 +52,17 @@ def create_csv_transaction(coin_name, dict_data):
 
 
 def get_latest_csv_transaction(coin_name, transaction_type=None):
+    if "/" in coin_name:
+        coin_name = coin_name.split("/")[0]
     file = f"transaction_{coin_name.lower()}.csv"
     with open(file, "r") as csv_file:
         data = csv.reader(csv_file, delimiter=",")
         if transaction_type is not None:
-            print("kondisional", transaction_type)
             transactions = [row for row in data if row[2] == transaction_type]
         else:
             transactions = list(data)[1:]
-        return transactions[-1]
+
+        if len(transactions) > 0:
+            return transactions[-1]
+        else:
+            return transactions

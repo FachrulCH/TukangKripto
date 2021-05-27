@@ -10,14 +10,12 @@ from tukang_kripto import configs
 from tukang_kripto.app_state import AppState
 from tukang_kripto.indodax import Indodax
 from tukang_kripto.public_API import PublicAPI
-from tukang_kripto.technical_analysis import TechnicalAnalysis, getAction, getInterval
-from tukang_kripto.utils import (
-    create_alert,
-    in_rupiah,
-    print_green,
-    print_red,
-    print_yellow,
-)
+from tukang_kripto.technical_analysis import (TechnicalAnalysis,
+                                              calculate_profit, getAction,
+                                              getInterval)
+from tukang_kripto.utils import (create_alert, create_csv_transaction,
+                                 in_rupiah, print_green, print_red,
+                                 print_yellow)
 
 logger.add(
     "running_{time}.log", rotation="1 day", format="{time} {level} {message}"
@@ -50,7 +48,6 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
         state.action = getAction(
             now, app, price, df, df_last, state.last_action, False, state
         )
-
         trade_conf = configs.coin(market)["indodax"]
         indodax = Indodax(trade_conf)
         harga = indodax.get_best_bids_price()
@@ -60,16 +57,13 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             logger.warning("Skip bang, keknya indodax error")
             return False
 
-        # harga = indodax.get_best_bids_price()
-        price_changes = 0
-        if state.last_close_price > 0:
-            price_changes = round(
-                ((price - state.last_close_price) / state.last_close_price * 100), 2
-            )
-
+        price_changes = "0%"
+        if state.market_price > 0:
+            price_changes = f"{calculate_profit(state.market_price, harga)}%"
+        state.market_price = harga  # update new price
         state.last_close_price = price
-        logger.info(
-            f"=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}%"
+        logger.warning(
+            f"\n=>   {state.action} {str(df_last['date'].values[0])[:16]} {in_rupiah(harga)} / {price_changes}"
         )
         # if a buy signal
         if state.action == "BUY":
@@ -77,7 +71,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             state.last_buy_high = state.last_buy_price
             if configs.enable_desktop_alert():
                 create_alert(
-                    f"{state.action} {market}",
+                    f"{state.action} {market} {price_changes}",
                     f"I think the {market} is intresting at {in_rupiah(harga)}!",
                 )
             percentage = int(trade_conf.get("buy_percentage", 100))
@@ -93,14 +87,25 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 )
                 return None
 
-            bought, bought_coin, price_per_coin = indodax.buy_coin(
-                percentage, limit_budget, state.last_sell_price
+            bought, bought_coin, price_per_coin, buy_amount = indodax.buy_coin(
+                percentage, limit_budget
             )
-            state.buy_count += int(bought)
-            state.buy_sum += float(bought_coin)
-            state.last_buy_size = float(bought_coin)
-            if price_per_coin > 0:
+            if bought:
+                state.buy_count += int(bought)
+                state.buy_sum += float(bought_coin)
+                state.last_buy_size = float(bought_coin)
                 state.last_buy_price = price_per_coin
+
+                transaction = {
+                    "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "coin_name": trade_conf["symbol"],
+                    "type": "buy",
+                    "coin_amount": bought_coin,
+                    "price": price_per_coin,
+                    "amount": buy_amount,
+                }
+                create_csv_transaction(trade_conf["symbol"], transaction)
+
             logger.info(
                 "Buy Count: {} Amount {} Rp{}",
                 state.buy_count,
@@ -115,14 +120,24 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"{state.action} {market}",
                     f"I think the {market} is NOT intresting at {in_rupiah(harga)}!",
                 )
-            sold, sold_coin, price_per_coin = indodax.sell_coin(
+            sold, sold_coin, price_per_coin, estimate_amount = indodax.sell_coin(
                 int(trade_conf["sell_percentage"])
             )
-            state.sell_count += 1
-            state.sell_sum += float(sold_coin)
-            if price_per_coin > 0:
-                state.last_sell_price = price_per_coin
             logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
+            if sold:
+                state.sell_count += 1
+                state.sell_sum += float(sold_coin)
+                state.last_sell_price = price_per_coin
+                transaction = {
+                    "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "coin_name": trade_conf["symbol"],
+                    "type": "sell",
+                    "coin_amount": sold_coin,
+                    "price": price_per_coin,
+                    "amount": estimate_amount,
+                }
+                create_csv_transaction(trade_conf["symbol"], transaction)
+
         else:
             state.last_action = "WAIT"
             # print(state.debug)
