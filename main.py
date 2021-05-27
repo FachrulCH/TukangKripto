@@ -84,10 +84,12 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             limit_budget = trade_conf.get("limit_budget", 0)
 
             # prevent overbought (2 times without selling, it will cost budget for other)
-            if state.buy_count >= state.sell_count:
+            if state.buy_count > state.sell_count:
                 logger.warning(
-                    "Kebanyakan beli, yang tadi {} koin aja belum di jual :P",
+                    "Kebanyakan beli, yang tadi {} koin aja belum di jual :P {} {} -",
                     state.last_buy_size,
+                    state.buy_count,
+                    state.sell_count,
                 )
                 return None
 
@@ -99,7 +101,12 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             state.last_buy_size = float(bought_coin)
             if price_per_coin > 0:
                 state.last_buy_price = price_per_coin
-            logger.info("Buy Count: {} Amount {}", state.buy_count, state.buy_sum)
+            logger.info(
+                "Buy Count: {} Amount {} Rp{}",
+                state.buy_count,
+                state.buy_sum,
+                price_per_coin,
+            )
 
         elif state.action == "SELL":
             state.last_action = "SELL"
@@ -111,7 +118,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
             sold, sold_coin, price_per_coin = indodax.sell_coin(
                 int(trade_conf["sell_percentage"])
             )
-            state.sell_count += int(sold)
+            state.sell_count += 1
             state.sell_sum += float(sold_coin)
             if price_per_coin > 0:
                 state.last_sell_price = price_per_coin

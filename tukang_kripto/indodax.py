@@ -1,9 +1,11 @@
+import datetime
 import math
 import os
 
 import ccxt
 from loguru import logger
 
+from tukang_kripto import utils
 from tukang_kripto.utils import print_red
 
 
@@ -62,11 +64,12 @@ class Indodax:
 
         coin_buy = round(budget / target_price, 8)
         logger.warning(
-            "Beli {}, Budget {}, koin: {}, Dengan harga {}",
+            "Beli {}, Budget {}, koin: {}, Dengan harga {}, last_sell_price {}",
             self.config["symbol"],
             budget,
             coin_buy,
             target_price,
+            last_sell_price,
         )
         # indodax.create_order('BTC/IDR', 'limit', 'buy', 0.00004784, 540542000)
 
@@ -101,14 +104,36 @@ class Indodax:
                 target_price = new_price
 
         logger.warning(
-            "Jual {} (total koin:{}), koin: {}, Dengan harga {}",
+            "Jual {} (total koin:{}), koin: {}, Dengan harga {}, last_buy_price {}",
             self.config["symbol"],
             coin,
             coin_sell,
             target_price,
+            last_buy_price,
         )
         # indodax.create_order('BTC/IDR', 'limit', 'sell', 0.00004784, 540542000)
         response = self.api.create_order(
             self.config["symbol"], "limit", "sell", coin_sell, target_price
         )
         return response.get("info").get("success") == "1", coin_sell, target_price
+
+    def get_history_trade(self, order=None, since=None, params={}):
+        self.api.load_markets()
+        if since is None:
+            yesterday = datetime.date.today() - datetime.timedelta(1)
+            since = int(yesterday.strftime("%s"))
+
+        request = {"order": "desc", "since": since}
+        market = self.api.market(self.config["symbol"])
+        request["pair"] = market["id"]
+        response = self.api.privatePostTradeHistory(self.api.extend(request, params))
+        data = response["return"]["trades"]
+        if order is not None:
+            return utils.filter_by(data, "type", order)
+        else:
+            return data
+
+    def get_latest_trade_data(self, order="buy"):
+        trade_data = self.get_history_trade(order)
+        last_trade = trade_data[0]
+        return {"last_buy_price": last_trade["price"]}
