@@ -33,7 +33,7 @@ def filter_by(array, key, value=None):
     return list(filter(lambda x: x[key] == value, array))
 
 
-def create_csv_transaction(coin_name, dict_data):
+def create_csv_transaction(coin_name, dict_data=None):
     if "/" in coin_name:
         coin_name = coin_name.split("/")[0]
     file = f"transaction_{coin_name.lower()}.csv"
@@ -44,11 +44,13 @@ def create_csv_transaction(coin_name, dict_data):
         with open(file, "w+") as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
             writer.writeheader()
-            writer.writerow(dict_data)
+            if dict_data:
+                writer.writerow(dict_data)
     else:
         with open(file, "a") as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
-            writer.writerow(dict_data)
+            if dict_data:
+                writer.writerow(dict_data)
 
 
 def get_latest_csv_transaction(coin_name, transaction_type=None):

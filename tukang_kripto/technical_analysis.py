@@ -1246,7 +1246,7 @@ def get_last_buy_price(coin_symbol):
         # found data
         return float(last_buy[4])
     print("Last buy price not found")
-    return None
+    return 0
 
 
 def calculate_profit(buy_price, sell_price):
@@ -1262,7 +1262,8 @@ def stop_loss(state: AppState):
 
     max_loss_rate = float(loss_rate) / 100
     last_price = get_last_buy_price(state.config_trade["symbol"])
-    if last_price:
+    max_loss = 0
+    if last_price > 0:
         max_loss = round(last_price - (last_price * max_loss_rate))
         print("Market price: ", state.market_price)
         if state.market_price <= max_loss:

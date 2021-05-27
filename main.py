@@ -156,9 +156,10 @@ if __name__ == "__main__":
         for coin in configs.all_coins():
             if coin["market"] not in states.keys():
                 states[coin["market"]] = AppState(coin["market"])
-
+            coin_name = coin["market"].split("-")[0]
             # First execution init
             executeJob(app, states[coin["market"]], coin["market"], coin["time_frame"])
+            create_csv_transaction(coin_name)
             logger.info(
                 f"Membuat job pengecekan {coin['market']} setiap {coin['pool_time']} detik"
             )
