@@ -26,7 +26,7 @@ def print_yellow(message):
 
 def in_rupiah(number):
     if number:
-        return "Rp{:,}".format(number)
+        return "Rp{:,}".format(int(number))
     return "Rp0"
 
 

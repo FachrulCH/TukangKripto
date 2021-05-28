@@ -1256,6 +1256,11 @@ def calculate_profit(buy_price, sell_price):
 
 def stop_loss(state: AppState):
     loss_rate = state.config_trade.get("maximum_loss_percentage", 0)
+    logger.debug(
+        "Checking STOP LOSS, max loss {}% last market price {}",
+        loss_rate,
+        state.market_price,
+    )
     if loss_rate == 0 or state.market_price == 0:
         return False
 
@@ -1267,7 +1272,7 @@ def stop_loss(state: AppState):
         print("Market price: ", state.market_price)
         if state.market_price <= max_loss:
             logger.warning(
-                f"STOP LOSS max_loss_rate:{max_loss_rate}, last_buy: {in_rupiah(last_price)}, max_lost: {in_rupiah(max_loss)}, market_price {in_rupiah(state.market_price)}"
+                f"\n\n STOP LOSS max_loss_rate:{max_loss_rate}, last_buy: {in_rupiah(last_price)}, max_lost: {in_rupiah(max_loss)}, market_price {in_rupiah(state.market_price)}"
             )
             return True
     logger.warning(

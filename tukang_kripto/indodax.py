@@ -33,7 +33,10 @@ class Indodax:
         if self.config.get("sell_with_profit_only", False):
             sell_price = book["asks"][3][0]
             new_sell_price = self.calculate_sell_price(sell_price)
-            print_red(f"JUAL UNTUNG: {sell_price} --> {new_sell_price}")
+            logger.warning(
+                f"JUAL UNTUNG: {in_rupiah(sell_price)} --> {in_rupiah(new_sell_price)}"
+            )
+            return new_sell_price
         return book["asks"][2][0]
 
     def get_best_bids_price(self):
@@ -146,6 +149,11 @@ class Indodax:
         last_price = self.get_last_buy_price()
         if last_price:
             min_sell_profit = round(last_price + (last_price * min_profit / 100))
+            logger.warning(
+                "\n=>   Perhitungan cuan target_sell_price: {} min_sell_profit: {}",
+                in_rupiah(target_sell_price),
+                in_rupiah(min_sell_profit),
+            )
             if target_sell_price < min_sell_profit:
                 return min_sell_profit
         return target_sell_price
