@@ -7,7 +7,8 @@ from loguru import logger
 
 from tukang_kripto import utils
 from tukang_kripto.technical_analysis import calculate_profit
-from tukang_kripto.utils import get_latest_csv_transaction, in_rupiah, print_red
+from tukang_kripto.utils import (get_latest_csv_transaction, in_rupiah,
+                                 print_red)
 
 
 class Indodax:

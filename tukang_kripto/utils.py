@@ -1,12 +1,21 @@
 import csv
 import os
 
+from tukang_kripto import configs
+from tukang_kripto.Telegram import Telegram
+
 
 def create_alert(title="Hey, there", message="I have something"):
-    command = f"""
-    osascript -e 'display notification "{message}" with title "{title}"'
-    """
-    os.system(command)
+    if configs.enable_desktop_alert():
+        command = f"""
+        osascript -e 'display notification "{message}" with title "{title}"'
+        """
+        os.system(command)
+
+    if configs.enable_telegram():
+        tele = configs.config["telegram"]
+        chat = Telegram(tele["token"], tele["client_id"])
+        chat.send(f"{title}: {message}")
 
 
 def print_red(message):

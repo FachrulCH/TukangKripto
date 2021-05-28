@@ -1,5 +1,10 @@
 {
-  "notification": "desktop_alert",
+  "notification": true,
+  "desktop_alert": true,
+  "telegram" : {
+        "token" : "<token>",
+        "client_id" : "<client id>"
+    },
   "debug": false,
   "coins": [
     {

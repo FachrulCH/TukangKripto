@@ -10,8 +10,17 @@ config = read_config()
 
 
 def enable_desktop_alert():
-    notification = config.get("notification", "off")
-    return notification == "desktop_alert"
+    return config.get("desktop_alert", False) is True
+
+
+def enable_notification():
+    return config.get("notification", False) is True
+
+
+def enable_telegram():
+    telegram = config.get("telegram", {})
+    config_empty = not telegram
+    return config_empty is False
 
 
 def all_coins():

@@ -10,20 +10,12 @@ from tukang_kripto import configs
 from tukang_kripto.app_state import AppState
 from tukang_kripto.indodax import Indodax
 from tukang_kripto.public_API import PublicAPI
-from tukang_kripto.technical_analysis import (
-    TechnicalAnalysis,
-    calculate_profit,
-    getAction,
-    getInterval,
-)
-from tukang_kripto.utils import (
-    create_alert,
-    create_csv_transaction,
-    in_rupiah,
-    print_green,
-    print_red,
-    print_yellow,
-)
+from tukang_kripto.technical_analysis import (TechnicalAnalysis,
+                                              calculate_profit, getAction,
+                                              getInterval)
+from tukang_kripto.utils import (create_alert, create_csv_transaction,
+                                 in_rupiah, print_green, print_red,
+                                 print_yellow)
 
 logger.add(
     "running_{time}.log", rotation="1 day", format="{time} {level} {message}"
@@ -77,7 +69,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
         if state.action == "BUY":
             state.last_action = "BUY"
             state.last_buy_high = state.last_buy_price
-            if configs.enable_desktop_alert():
+            if configs.enable_notification():
                 create_alert(
                     f"{state.action} {market} {price_changes}",
                     f"I think the {market} is intresting at {in_rupiah(harga)}!",
@@ -135,7 +127,9 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 sold, sold_coin, price_per_coin, estimate_amount = indodax.sell_coin(
                     int(trade_conf["sell_percentage"]), stop_loss=state.on_stop_loss
                 )
-                logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
+                logger.info(
+                    "Sell Count: {} Amount {}", state.sell_count, state.sell_sum
+                )
                 if sold:
                     state.sell_count += 1
                     state.sell_sum += float(sold_coin)
@@ -157,7 +151,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     # not in position holding coin
                     state.in_position = False
             else:
-                logger.critical('Mau JUAL tapi lagi ga megang koin :(')
+                logger.critical("Mau JUAL tapi lagi ga megang koin :(")
 
         else:
             state.last_action = "WAIT"
