@@ -29,3 +29,4 @@ class AppState:
         self.debug = configs.run_in_debug()
         self.market_price = 0
         self.trend = "bullish"
+        self.on_stop_loss = False

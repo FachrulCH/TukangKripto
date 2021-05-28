@@ -130,20 +130,23 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"I think the {market} is NOT intresting at {in_rupiah(harga)}!",
                 )
             sold, sold_coin, price_per_coin, estimate_amount = indodax.sell_coin(
-                int(trade_conf["sell_percentage"])
+                int(trade_conf["sell_percentage"]), stop_loss=state.on_stop_loss
             )
             logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
             if sold:
                 state.sell_count += 1
                 state.sell_sum += float(sold_coin)
                 state.last_sell_price = price_per_coin
+
+                # reset stop loss state
+                state.on_stop_loss = False
                 transaction = {
                     "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "coin_name": trade_conf["symbol"],
                     "type": "sell",
                     "coin_amount": sold_coin,
                     "price": price_per_coin,
-                    "amount": estimate_amount,
+                    "amount": int(estimate_amount),
                 }
                 create_csv_transaction(trade_conf["symbol"], transaction)
 

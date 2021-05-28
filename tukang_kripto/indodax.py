@@ -22,18 +22,25 @@ class Indodax:
         )
         self.config = config
 
-    def get_best_ask_price(self):
+    def get_best_ask_price(self, stop_loss):
         # harga jual
         book = self.api.fetch_order_book(self.config["symbol"])
-        return book["asks"][3][0]
+        if stop_loss:
+            sell_price = book["asks"][0][0]
+            print_red(f"RUGI BANDAR, HAKA aja lah {sell_price}")
+            return sell_price
+
+        if self.config.get("sell_with_profit_only", False):
+            sell_price = book["asks"][3][0]
+            new_sell_price = self.calculate_sell_price(sell_price)
+            print_red(f"JUAL UNTUNG: {sell_price} --> {new_sell_price}")
+        return book["asks"][2][0]
 
     def get_best_bids_price(self):
         # harga beli
         try:
             book = self.api.fetch_order_book(self.config["symbol"])
             order_book_price = book["bids"][1][0]
-            if self.config.get("sell_with_profit_only", False):
-                return self.calculate_sell_price(order_book_price)
             return order_book_price
         except Exception as e:
             logger.error("Indodax Error euy")
@@ -82,14 +89,14 @@ class Indodax:
             budget,
         )
 
-    def sell_coin(self, percentage=100):
+    def sell_coin(self, percentage=100, stop_loss=False):
         coin = self.get_balance_coin()
         if math.isclose(coin, 0.0):
             print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
             return False, 0, 0, 0
 
         coin_sell = round(percentage / 100 * coin, 8)
-        sell_at = self.get_best_bids_price()
+        sell_at = self.get_best_ask_price(stop_loss)
         buy_at = self.get_last_buy_price()
         profit = calculate_profit(buy_at, sell_at)
         estimate_amount = coin_sell * sell_at

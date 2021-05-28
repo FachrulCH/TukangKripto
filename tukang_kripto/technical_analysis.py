@@ -1226,6 +1226,7 @@ def getAction(
         )
 
     if stop_loss(state):
+        state.on_stop_loss = True
         return "SELL"
 
     if golden_cross_ema and last_action != "BUY":
