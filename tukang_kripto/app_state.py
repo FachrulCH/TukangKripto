@@ -30,3 +30,4 @@ class AppState:
         self.market_price = 0
         self.trend = "bullish"
         self.on_stop_loss = False
+        self.in_position = True

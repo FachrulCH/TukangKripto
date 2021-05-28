@@ -104,6 +104,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 state.last_buy_size = float(bought_coin)
                 state.last_buy_price = price_per_coin
                 state.trend = "bullish"
+                state.in_position = True
                 transaction = {
                     "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "coin_name": trade_conf["symbol"],
@@ -129,26 +130,34 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"{state.action} {market}",
                     f"I think the {market} is NOT intresting at {in_rupiah(harga)}!",
                 )
-            sold, sold_coin, price_per_coin, estimate_amount = indodax.sell_coin(
-                int(trade_conf["sell_percentage"]), stop_loss=state.on_stop_loss
-            )
-            logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
-            if sold:
-                state.sell_count += 1
-                state.sell_sum += float(sold_coin)
-                state.last_sell_price = price_per_coin
 
-                # reset stop loss state
-                state.on_stop_loss = False
-                transaction = {
-                    "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "coin_name": trade_conf["symbol"],
-                    "type": "sell",
-                    "coin_amount": sold_coin,
-                    "price": price_per_coin,
-                    "amount": int(estimate_amount),
-                }
-                create_csv_transaction(trade_conf["symbol"], transaction)
+            if state.in_position:
+                sold, sold_coin, price_per_coin, estimate_amount = indodax.sell_coin(
+                    int(trade_conf["sell_percentage"]), stop_loss=state.on_stop_loss
+                )
+                logger.info("Sell Count: {} Amount {}", state.sell_count, state.sell_sum)
+                if sold:
+                    state.sell_count += 1
+                    state.sell_sum += float(sold_coin)
+                    state.last_sell_price = price_per_coin
+
+                    # reset stop loss state
+                    state.on_stop_loss = False
+                    transaction = {
+                        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "coin_name": trade_conf["symbol"],
+                        "type": "sell",
+                        "coin_amount": sold_coin,
+                        "price": int(price_per_coin),
+                        "amount": int(estimate_amount),
+                    }
+                    create_csv_transaction(trade_conf["symbol"], transaction)
+
+                if sold_coin <= 0:
+                    # not in position holding coin
+                    state.in_position = False
+            else:
+                logger.critical('Mau JUAL tapi lagi ga megang koin :(')
 
         else:
             state.last_action = "WAIT"

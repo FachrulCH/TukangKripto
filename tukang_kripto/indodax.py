@@ -28,7 +28,7 @@ class Indodax:
         if stop_loss:
             sell_price = book["asks"][0][0]
             print_red(f"RUGI BANDAR, HAKA aja lah {sell_price}")
-            return sell_price
+            return int(sell_price)
 
         if self.config.get("sell_with_profit_only", False):
             sell_price = book["asks"][3][0]
@@ -36,8 +36,8 @@ class Indodax:
             logger.warning(
                 f"JUAL UNTUNG: {in_rupiah(sell_price)} --> {in_rupiah(new_sell_price)}"
             )
-            return new_sell_price
-        return book["asks"][2][0]
+            return int(new_sell_price)
+        return int(book["asks"][2][0])
 
     def get_best_bids_price(self):
         # harga beli
@@ -96,7 +96,7 @@ class Indodax:
         coin = self.get_balance_coin()
         if math.isclose(coin, 0.0):
             print_red(f"Aduuh gapunya koin euy, sekarang ada {coin}")
-            return False, 0, 0, 0
+            return False, -10, 0, 0
 
         coin_sell = round(percentage / 100 * coin, 8)
         sell_at = self.get_best_ask_price(stop_loss)
