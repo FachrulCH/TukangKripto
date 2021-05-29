@@ -122,7 +122,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     f"Udah naik{price_changes}, kita beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
                 )
 
-        elif state.action == "SELL":
+        elif "SELL" in state.action:
             state.last_action = "SELL"
             state.trend = "bearish"
             price_per_coin = 0
