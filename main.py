@@ -159,8 +159,8 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
             if configs.enable_desktop_alert():
                 create_alert(
-                    f"{state.action} '{market}'",
-                    f"Kita jual {sold_coin} di {in_rupiah(price_per_coin)}/coin!",
+                    f"{state.action} '{trade_conf['symbol']}'",
+                    f"Kita jual {price_changes} {float(sold_coin)} di {in_rupiah(price_per_coin)}/coin!",
                 )
         else:
             state.last_action = "WAIT"
