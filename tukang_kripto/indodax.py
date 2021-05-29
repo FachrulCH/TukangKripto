@@ -7,8 +7,7 @@ from loguru import logger
 
 from tukang_kripto import utils
 from tukang_kripto.technical_analysis import calculate_profit
-from tukang_kripto.utils import (get_latest_csv_transaction, in_rupiah,
-                                 print_red)
+from tukang_kripto.utils import get_latest_csv_transaction, in_rupiah, print_red
 
 
 class Indodax:
@@ -59,6 +58,10 @@ class Indodax:
         coin = self.config["symbol"].split("/")[0]
         balances = self.api.fetch_free_balance()
         return balances[coin]
+
+    def get_balance_all(self):
+        balances = self.api.fetch_free_balance()
+        return balances
 
     def buy_coin(self, percentage=100, limit_budget=0):
         idr = self.get_balance_idr()

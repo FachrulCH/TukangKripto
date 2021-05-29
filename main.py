@@ -10,12 +10,20 @@ from tukang_kripto import configs
 from tukang_kripto.app_state import AppState
 from tukang_kripto.indodax import Indodax
 from tukang_kripto.public_API import PublicAPI
-from tukang_kripto.technical_analysis import (TechnicalAnalysis,
-                                              calculate_profit, getAction,
-                                              getInterval)
-from tukang_kripto.utils import (create_alert, create_csv_transaction,
-                                 in_rupiah, print_green, print_red,
-                                 print_yellow)
+from tukang_kripto.technical_analysis import (
+    TechnicalAnalysis,
+    calculate_profit,
+    getAction,
+    getInterval,
+)
+from tukang_kripto.utils import (
+    create_alert,
+    create_csv_transaction,
+    in_rupiah,
+    print_green,
+    print_red,
+    print_yellow,
+)
 
 logger.add(
     "running_{time}.log", rotation="1 day", format="{time} {level} {message}"
@@ -69,11 +77,6 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
         if state.action == "BUY":
             state.last_action = "BUY"
             state.last_buy_high = state.last_buy_price
-            if configs.enable_notification():
-                create_alert(
-                    f"{state.action} {market} {price_changes}",
-                    f"I think the {market} is intresting at {in_rupiah(harga)}!",
-                )
             percentage = int(trade_conf.get("buy_percentage", 100))
             limit_budget = trade_conf.get("limit_budget", 0)
 
@@ -113,16 +116,16 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 state.buy_sum,
                 price_per_coin,
             )
+            if configs.enable_notification():
+                create_alert(
+                    f"{state.action} '{market}' #{state.buy_count}",
+                    f"Udah naik{price_changes}, kita beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
+                )
 
         elif state.action == "SELL":
             state.last_action = "SELL"
             state.trend = "bearish"
-            if configs.enable_desktop_alert():
-                create_alert(
-                    f"{state.action} {market}",
-                    f"I think the {market} is NOT intresting at {in_rupiah(harga)}!",
-                )
-
+            price_per_coin = 0
             if state.in_position:
                 sold, sold_coin, price_per_coin, estimate_amount = indodax.sell_coin(
                     int(trade_conf["sell_percentage"]), stop_loss=state.on_stop_loss
@@ -151,8 +154,14 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     # not in position holding coin
                     state.in_position = False
             else:
+                sold_coin = 0
                 logger.critical("Mau JUAL tapi lagi ga megang koin :(")
 
+            if configs.enable_desktop_alert():
+                create_alert(
+                    f"{state.action} '{market}'",
+                    f"Kita jual {sold_coin} di {in_rupiah(price_per_coin)}/coin!",
+                )
         else:
             state.last_action = "WAIT"
             # print(state.debug)
