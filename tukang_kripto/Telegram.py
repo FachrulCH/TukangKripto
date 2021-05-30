@@ -31,6 +31,7 @@ class Telegram:
                 + "&parse_mode=Markdown&text="
                 + escaped_message
             )
+            logger.debug(payload)
             resp = get(payload)
 
             if resp.status_code != 200:

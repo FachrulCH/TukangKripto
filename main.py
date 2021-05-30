@@ -110,17 +110,24 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 }
                 create_csv_transaction(trade_conf["symbol"], transaction)
 
+                if configs.enable_notification():
+                    create_alert(
+                        f"{state.action} {market} #{state.buy_count}",
+                        f"Udah bergerak naik {price_changes}, kita beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
+                    )
+            else:
+                if configs.enable_notification():
+                    create_alert(
+                        f"Gagal {state.action} {market} #{state.buy_count}",
+                        f"kita mau beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
+                    )
+
             logger.info(
                 "Buy Count: {} Amount {} Rp{}",
                 state.buy_count,
                 state.buy_sum,
                 price_per_coin,
             )
-            if configs.enable_notification():
-                create_alert(
-                    f"{state.action} '{market}' #{state.buy_count}",
-                    f"Udah naik{price_changes}, kita beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
-                )
 
         elif "SELL" in state.action:
             state.last_action = "SELL"
@@ -149,6 +156,11 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                         "amount": int(estimate_amount),
                     }
                     create_csv_transaction(trade_conf["symbol"], transaction)
+                    if configs.enable_desktop_alert():
+                        create_alert(
+                            f"{state.action} {trade_conf['symbol']}",
+                            f"Kita jual {price_changes} {float(sold_coin)} di {in_rupiah(price_per_coin)}/coin!",
+                        )
 
                 if sold_coin <= 0:
                     # not in position holding coin
@@ -157,11 +169,6 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 sold_coin = 0
                 logger.critical("Mau JUAL tapi lagi ga megang koin :(")
 
-            if configs.enable_desktop_alert():
-                create_alert(
-                    f"{state.action} '{trade_conf['symbol']}'",
-                    f"Kita jual {price_changes} {float(sold_coin)} di {in_rupiah(price_per_coin)}/coin!",
-                )
         else:
             state.last_action = "WAIT"
             # print(state.debug)
