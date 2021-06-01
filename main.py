@@ -112,13 +112,13 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
                 if configs.enable_notification():
                     create_alert(
-                        f"{state.action} {market} #{state.buy_count}",
+                        f"{state.action} {market} {state.buy_count}",
                         f"Udah bergerak naik {price_changes}, kita beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
                     )
             else:
                 if configs.enable_notification():
                     create_alert(
-                        f"Gagal {state.action} {market} #{state.buy_count}",
+                        f"Gagal {state.action} {market} {state.buy_count}",
                         f"kita mau beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
                     )
 
