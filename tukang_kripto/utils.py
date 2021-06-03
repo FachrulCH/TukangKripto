@@ -15,7 +15,7 @@ def create_alert(title="Hey, there", message="I have something"):
     if configs.enable_telegram():
         tele = configs.config["telegram"]
         chat = Telegram(tele["token"], tele["client_id"])
-        chat.send(f"{title}: {message}")
+        chat.send(f"{title}: \n{message}")
 
 
 def print_red(message):

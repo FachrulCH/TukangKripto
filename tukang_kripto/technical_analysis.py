@@ -1184,6 +1184,7 @@ def getAction(
     )
 
     if state.debug:
+        logger.debug(f"=== {state.coin_name} ===")
         logger.debug(
             "ema12ltema26 {}, ema12gtema26 {}, golden_cross {}, golden_cross_ema {}, death_cross_ema {},",
             ema12ltema26,

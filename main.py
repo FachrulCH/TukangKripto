@@ -59,6 +59,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
         trade_conf = configs.coin(market)["indodax"]
         indodax = Indodax(trade_conf)
         harga = indodax.get_best_bids_price()
+
         if not harga:
             # Possibly error from indodax
             # exit the execution
@@ -100,6 +101,8 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 state.last_buy_price = price_per_coin
                 state.trend = "bullish"
                 state.in_position = True
+                top1_sell = indodax.get_top_sale_price(0)
+
                 transaction = {
                     "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "coin_name": trade_conf["symbol"],
@@ -111,10 +114,8 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                 create_csv_transaction(trade_conf["symbol"], transaction)
 
                 if configs.enable_notification():
-                    create_alert(
-                        f"{state.action} {market} {state.buy_count}",
-                        f"Udah bergerak naik {price_changes}, kita beli di harga {in_rupiah(price_per_coin)} sebanyak {bought_coin}!",
-                    )
+                    msg = f"Top Bids: {in_rupiah(harga)} | Top Ask: {in_rupiah(top1_sell)} | \nMau Beli di harga {in_rupiah(price_per_coin)} sebanyak {float(bought_coin)} koin !"
+                    create_alert(f"{state.action} {market} {state.buy_count}", msg)
             else:
                 if configs.enable_notification():
                     create_alert(
@@ -147,6 +148,8 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
 
                     # reset stop loss state
                     state.on_stop_loss = False
+                    top1_sell = indodax.get_top_sale_price(0)
+                    last_buy_coin = indodax.get_last_buy_price()
                     transaction = {
                         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "coin_name": trade_conf["symbol"],
@@ -159,7 +162,7 @@ def executeJob(app=PublicAPI(), state=AppState(), market="BTC-USDT", time_frame=
                     if configs.enable_desktop_alert():
                         create_alert(
                             f"{state.action} {trade_conf['symbol']}",
-                            f"Kita jual {price_changes} {float(sold_coin)} di {in_rupiah(price_per_coin)}/coin!",
+                            f"Top Bids: {in_rupiah(harga)} | Top Ask: {in_rupiah(top1_sell)} \nBeli di harga {in_rupiah(last_buy_coin)} Kita jual di harga {in_rupiah(price_per_coin)} sebanyak {float(sold_coin)} koin !",
                         )
 
                 if sold_coin <= 0:
