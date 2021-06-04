@@ -40,7 +40,7 @@ class Indodax:
         return int(book["asks"][2][0])
 
     def get_top_sale_price(self, index=0):
-        book = self.api.fetch_order_book(self.config["symbol"]).get("ask")
+        book = self.api.fetch_order_book(self.config["symbol"]).get("asks")
         # return top 3 selling price
         return int(book[index][0])
 
